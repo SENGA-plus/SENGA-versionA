@@ -2,15 +2,15 @@
 #  make -f Makefile.codegen    #
 ################################
 
-COMP=gnu
-LOC=workst
+COMP=h5
+LOC=rocket
 DEBUG=yes
 
 ifeq ($(COMP),gnu)
 	ifeq ($(LOC),archer2)
 		FC=mpif90 -g -cpp -fallow-argument-mismatch#-DHDF5
 	else ifeq ($(LOC),rocket)
-		FC=mpif90 -g -cpp -fallow-argument-mismatch#-DHDF5
+		FC=mpif90 -g -cpp -Wlto-type-mismatch#-DHDF5
 	else
 		FC=mpif90 -g -cpp
 	endif
@@ -18,6 +18,8 @@ endif
 ifeq ($(COMP),h5)
 	ifeq ($(LOC),archer2)
 		FC=h5pfc -g -cpp -fallow-argument-mismatch#-DHDF5
+	else ifeq ($(LOC),rocket)
+		FC=h5pfc -g -cpp -Wlto-type-mismatch -DHDF5
 	else
 		FC=h5pfc -g -cpp #-DHDF5
 	endif
@@ -35,7 +37,7 @@ endif
 # Source files
 SRC =   senga2.f rhscal.f rhsvel.f lincom.f fincom.f \
 	temper.f tempin.f chrate.f chemin.f diffin.f radcal.f radcin.f \
-	hdf5io.f indata.f contin.f output.f finish.f \
+	indata.f contin.f output.f finish.f \
 	dfinit.f dfbydx.f dfbydy.f dfbydz.f d2fdx2.f d2fdy2.f d2fdz2.f \
 	d2fdxy.f d2fdxz.f d2fdyz.f dfmstr.f \
 	flinit.f fltrem.f filtrx.f filtry.f filtrz.f \
@@ -54,7 +56,8 @@ SRC =   senga2.f rhscal.f rhsvel.f lincom.f fincom.f \
 	cxhalo.f cyhalo.f czhalo.f cxhals.f cyhals.f czhals.f \
 	exhalo.f inhalo.f exhals.f inhals.f \
 	zeroxl.f zeroxr.f zeroyl.f zeroyr.f zerozl.f zerozr.f \
-	ardump.f ardums.f chkarr.f chkary.f inflow.f
+	ardump.f ardums.f chkarr.f chkary.f inflow.f#\
+	vlamin.f #LR: Uncomment if calling functions such as VLAMIN in indata.f
 
 # Include files
 INC = com_senga2.h com_espect.h
@@ -62,7 +65,8 @@ INC = com_senga2.h com_espect.h
 # Libraries: need separate compilation in their own subdirectories
 # FFTs; random number generators
 # MPI libraries
-LIBS = fftlib/fftlib.a rndlib/rndlib.a parlib/parlib.a -lm
+#LIBS = fftlib/fftlib.a rndlib/rndlib.a parlib/parlib.a -lm
+LIBS = fftlib/fftlib.a rndlib/rndlib.a parlib/parlib.a hdflib/libhdf.a -lm
 
 # Object files are the same as the source files but with .o rather than .f
 OBJS=$(SRC:.f=.o)
@@ -82,4 +86,4 @@ senga2: $(OBJS)
 
 # Command to clean up after
 clean: 
-	rm -f *.o senga2 core *.mod
+	rm -f *.o senga2 core *.mod ./**/*lib*.a

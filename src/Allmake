@@ -15,6 +15,10 @@ cd rndlib
 ./Makeran
 cd ..
 #
+cd hdflib
+./Makehdf
+cd ..
+#
 rm senga2
 make -f Makefile.codegen -j 10
 #

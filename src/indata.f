@@ -33,9 +33,11 @@ C            DUMP INPUT FILES    - UNIT NCDMPI - UNFORMATTED  (RESTART ONLY)
 C        
 C     *************************************************************************
 
-#ifdef HDF5
-      USE HDF5IO
-#endif
+!START LR: Removal
+!#ifdef HDF5
+!      USE HDF5IO
+!#endif
+!END
 
 C     GLOBAL DATA
 C     ===========
@@ -48,15 +50,39 @@ C     -------------------------------------------------------------------------
 C     PARAMETERS
 C     ==========
 C     FILENAME COMPONENTS
+!START: LR: Replacement LR:Reverting
       CHARACTER*10 PNCONT,PNCHEM,PNDIFF,PNRADN
       CHARACTER*11 PNREPT,PNSTAT,PNDMPI,PNDMPO
-      CHARACTER*4 PNXDAT,PNXRES
+!      CHARACTER*4 PNCONT,PNCHEM,PNDIFF,PNRADN
+!      CHARACTER*4 PNREPT,PNSTAT,PNDMPI,PNDMPO
+!END
+
+!START: LR: Replacement
+!      CHARACTER*4 PNXDAT,PNXRES
+      CHARACTER*4 PNXDAT,PNXRES,PNTIXL,PNTCXL
+      CHARACTER*4 PNXHDF,PNXBIN,PNEXT
+      CHARACTER*6 PNTIME
+!END
+
+!START LR: Replacement LR:Reverting
       PARAMETER(PNCONT = 'input/cont',
-     +          PNCHEM = 'input/chem', 
+     +          PNCHEM = 'input/chem',
      +          PNDIFF = 'input/diff', PNRADN = 'input/radn',
      +          PNREPT = 'output/rept', PNSTAT = 'output/stat',
      +          PNDMPI = 'output/dmpi', PNDMPO = 'output/dmpo',
-     +          PNXDAT = '.dat', PNXRES = '.res')
+!      PARAMETER(PNCONT = 'cont',
+!     +          PNCHEM = 'chem', PNDIFF = 'diff', PNRADN = 'radn',
+!     +          PNREPT = 'rept', PNSTAT = 'stat',
+!     +          PNDMPI = 'dmpi', PNDMPO = 'dmpo',
+!END
+!START LR: Removal
+!     +          PNXDAT = '.dat', PNXRES = '.res')
+!END
+!START LR: Addition
+     +          PNXDAT = '.dat', PNXRES = '.res',
+     +          PNXHDF = '.h5',  PNXBIN = '.bin',
+     +          PNTIXL = 'tixl', PNTCXL = 'tcxl')
+!END
 
 C     REPORT FILE LINE LENGTH
       INTEGER LENLIN
@@ -74,11 +100,18 @@ C     ==========
       DOUBLE PRECISION DTRANS(NSPCMX)
       DOUBLE PRECISION RTIN,DURIN,DVRIN,DWRIN,DERIN
       DOUBLE PRECISION TTEMP(5),TTOLD(5)
+!START: LR: Replacement LR:Reverting
       DOUBLE PRECISION FORNOW
+!      DOUBLE PRECISION FORNOW,TMPLOG
+!END
+
       DOUBLE PRECISION COMBO1,COMBO2,COMBO3
       INTEGER IINDEX,IPOWER,ICOEF1,ICOEF2
       INTEGER IC,JC,KC,ISPEC,ISTEP,ITINT,ICP
+!START: LR: Replacement LR: Reverting
       INTEGER JSPEC,NCOUNT
+!      INTEGER JSPEC,NCOUNT,ICOEFF
+!END
       INTEGER NXDMAX,NYDMAX,NZDMAX,NDSPEC
       CHARACTER*132 STROUT
       CHARACTER*79 CLSTAR,CLDASH
@@ -88,7 +121,9 @@ C     ==========
       CHARACTER*1 STRCOF
 C     RSC UPDATE NUMBER OF PROCESSORS
       CHARACTER*6 PNPROC
+!START: LR: Removal LR: Reverting
       CHARACTER*1 PNFLAG
+!END
       CHARACTER*20 FNAME
       LOGICAL FXDUMP
       LOGICAL FLGREQ
@@ -100,9 +135,11 @@ C     =====
 C     =========================================================================
 C     SET UP HDF5 I/O
 C     ===============
-#ifdef HDF5
-      CALL HDF5_INIT
-#endif
+!START LR: Removal
+!#ifdef HDF5
+!      CALL HDF5_INIT
+!#endif
+!END
 
 C     SET UP FILE I/O
 C     ===============
@@ -115,6 +152,9 @@ C     UNIT NUMBERS
       NCDMPO = 7
       NCREPT = 8
       NCSTAT = 9
+!START LR: Addition LR:Reverting
+!      NCTIXL = 10
+!END
 
 C     BUILD THE FILENAMES
       WRITE(PNPROC,'(I6.6)')IPROC
@@ -125,17 +165,23 @@ C     BUILD THE FILENAMES
       FNREPT = PNREPT//PNXRES
       FNSTAT = PNSTAT//PNXRES
       IDFLAG = 0
-#ifdef HDF5
-      H5_FILENAME(1) = PNDMPI//PNFLAG//".h5"
-#endif      
+!START LR: Removal
+!#ifdef HDF5
+!      H5_FILENAME(1) = PNDMPI//PNFLAG//".h5"
+!#endif
+!END
+!START LR: Removal LR: Reverting     
       WRITE(PNFLAG,'(I1)')IDFLAG
       FNDMPO(1) = PNDMPI//PNPROC//PNFLAG//PNXDAT
       IDFLAG = 1
       WRITE(PNFLAG,'(I1)')IDFLAG
       FNDMPO(2) = PNDMPI//PNPROC//PNFLAG//PNXDAT
-#ifdef HDF5      
-      H5_FILENAME(2) = PNDMPI//PNFLAG//".h5"
-#endif
+!END
+!START LR: Removal
+!#ifdef HDF5      
+!      H5_FILENAME(2) = PNDMPI//PNFLAG//".h5"
+!#endif
+!END
 
 C     =========================================================================
 
@@ -413,12 +459,18 @@ C       CHECK NUMBER OF SPECIES
         ENDIF
 C       INITIAL SPECIES MASS FRACTIONS
         WRITE(NCREPT,*)'ISPEC,YRIN'
+!START LR: Replacement LR:Reverting
         DO ISPEC = 1,NSPEC
+!        DO ISPEC = 1,NSPREQ
+!END
           WRITE(NCREPT,9450)ISPEC,YRIN(ISPEC)
         ENDDO
 C       CHECK INITIAL SPECIES MASS FRACTIONS
         FORNOW = ZERO
+!START LR: Replacement LR: Reverting
         DO ISPEC = 1,NSPEC
+!        DO ISPEC = 1,NSPREQ
+!END
           FORNOW = FORNOW + YRIN(ISPEC)
         ENDDO
         IF(ABS(FORNOW-ONE).GT.YTOLER)THEN
@@ -596,7 +648,10 @@ C       STEP LIST
         WRITE(NCREPT,*)'Reaction mechanism:'
         WRITE(NCREPT,*)'  Number of steps:'
         WRITE(NCREPT,'(I5)')NSTEP
+!START LR: Replacement LR:Reverting
         IF(NSTEP.NE.NSTPMX)THEN
+!        IF(MAX(1,NSTEP).NE.NSTPMX)THEN
+!END
           WRITE(NCREPT,*)'Warning: mismatch in number of steps:' 
           WRITE(NCREPT,9600)NSTEP,NSTPMX
         ENDIF
@@ -1014,6 +1069,7 @@ C     AND IS CLOSED BEFORE EXIT FROM THIS SUBROUTINE
 
 C     =========================================================================
 
+!START LR: Removal LR: Reverting
 C     INITIALISE ONLINE STATISTICS
 C     ============================
 
@@ -1031,10 +1087,12 @@ C     ZERO THE STATISTICS STORAGE COUNTER
       ITSTAT = 0
 
 C     =========================================================================
+!END
 
 C     CHECK AND INITIALISE DUMP FILES
 C     -------------------------------
 #ifndef HDF5
+!START LR: Removal LR: Reverting
       INQUIRE(FILE=FNDMPO(1),EXIST=FXDUMP)
       IF(.NOT.FXDUMP)THEN
         IF(NDOFMT.EQ.0)THEN
@@ -1053,8 +1111,114 @@ C     -------------------------------
         ENDIF
         CLOSE(NCDMPO)
       ENDIF
+!END
 #else
-      CALL CREATE_H5DUMP_FILES
+!START LR: Replacement
+!      CALL CREATE_H5DUMP_FILES
+
+C     1. BUILD RESTART FILENAMES
+C     EACH FILE CONSISTS OF FOLLOWING ELEMENTS:
+
+C     TIME/STEP ELEMENT
+C     -----------------
+C     SET FNDMPO(1)
+      IF(NCDMPI.EQ.0)THEN
+         WRITE(PNTIME,'(I6.6)')
+     $        FLOOR(REAL(ITIME)/(REAL(50*NTSTAT)))
+      ELSE
+         WRITE(PNTIME,'(I6.6)')
+     $        CEILING(REAL(ITIME)/(REAL(50*NTSTAT)))
+      ENDIF
+
+C     EXTENSION
+C     ---------
+      IF(ABS(NDOFMT).EQ.1)THEN
+         PNEXT = PNXBIN
+      ELSE IF (ABS(NDOFMT).EQ.2)THEN
+         PNEXT = PNXDAT
+      ELSE
+         PNEXT = PNXHDF
+      ENDIF
+
+C     PROC/COLLECTIVE
+C     ---------------
+      IF(NDOFMT.EQ.0)THEN
+C     FNDMPO(1) = PNDMPI//PNTIME//PNEXT
+!         WRITE(FNDMPO(1),'((1A4),(I6.6),(1A3))') PNDMPI,IDFLAG,PNXHDF   !LR: Commented out
+         IDFLAG = 0                                                     !LR: New
+         WRITE(FNDMPO(1),'((1A11),(I1),(1A3))') PNDMPI,IDFLAG,PNXHDF   !LR: New
+         IDFLAG = 1                                                     !LR: New
+         WRITE(FNDMPO(2),'((1A11),(I1),(1A3))') PNDMPI,IDFLAG,PNXHDF   !LR: New
+      ELSE
+         WRITE(PNPROC,'(I6.6)') IPROC
+         FNDMPO(1) = PNDMPI//PNTIME//'.'//PNPROC//PNEXT
+      ENDIF
+C     USE FORMATTED ONLY FOR CASE 2 (STEP) AND -2 (TIME)
+C     IN ALL OTHER CASES INITIALISE UNFORMATTED FILES
+
+      IF(ABS(NDOFMT).GE.1)THEN
+         INQUIRE(FILE=FNDMPO(1),EXIST=FXDUMP)
+         IF(.NOT.FXDUMP)THEN
+            IF(ABS(NDOFMT).EQ.1)THEN
+               OPEN(UNIT=NCDMPO,FILE=FNDMPO(1),
+     $              STATUS='NEW',FORM='UNFORMATTED')
+            ELSE IF(ABS(NDOFMT).EQ.2)THEN
+               OPEN(UNIT=NCDMPO,FILE=FNDMPO(1),
+     $              STATUS='NEW',FORM='FORMATTED')
+            ENDIF
+            CLOSE(NCDMPO)
+         ENDIF
+      ENDIF
+
+C     =========================================================================
+
+C     BUILD THE FILENAMES FOR INLET/INITIAL TURBULENT VELOCITY FIELD      
+      WRITE(PNPROC,'(I6.6)')IPROC
+
+C     INLET RESTART FILE NAME
+      IF(INTURB.EQ.2)THEN
+         IF(NDIFMT.EQ.0)THEN
+
+            WRITE(PNPROC,'(I6.6)') (FLOOR(REAL(IXPROC/NYPROC)))
+            FNTCXL = PNTCXL//PNPROC//PNXHDF
+C     WRITE(FNTCXL,'((1A4),(I6.6),(1A3))') PNTCXL,IDFLAG,PNXHDF
+
+         ELSE
+
+            WRITE(PNPROC,'(I6.6)') (MOD(IXPROC,NYPROC) +
+     $           IYPROC*NXPROC+IZPROC*NXPROC*NYPROC)
+            FNTCXL = PNTCXL//PNPROC//PNXDAT
+
+         ENDIF
+      ENDIF
+
+C     INLET RESTART FILE NAME
+      IF(INTURB.EQ.3)THEN
+         IF(NDIFMT.EQ.0)THEN
+
+C     READ FROM A SINGLE FILE
+            WRITE(PNPROC,'(I6.6)') (FLOOR(REAL(IXPROC/NXPROC)))
+            FNTCXL = PNTCXL//PNPROC//PNXHDF
+
+         ELSE
+
+            WRITE(PNPROC,'(I6.6)') (MOD(IXPROC,NXPROC) +
+     $           IYPROC*NXPROC+IZPROC*NXPROC*NYPROC)
+            FNTCXL = PNTCXL//PNPROC//PNXDAT
+
+         ENDIF
+      ENDIF
+
+      IF(NGBCXL.EQ.NSBCI3.AND.NXLPRM(1).EQ.3)THEN
+
+         IF(NDIFMT.EQ.0) THEN
+            WRITE(FNTIXL,'((1A4),(I6.6),(1A3))') PNTIXL,IDFLAG,PNXHDF            
+         ELSE
+            FNTIXL = PNTIXL//PNPROC//PNXDAT
+         ENDIF
+
+      ENDIF
+!END
 #endif
 
 C     ==========================================================================
@@ -1074,7 +1238,16 @@ C     TIME STEPPING
 C     -------------
       ETIME = ZERO
       NTIME2 = NTIME1+NTIME-1
+!START LR: Replacement LR:Reverting
       ITIME = 0
+!      ITIME = NTIME1 - 1
+!END
+!START LR: Addition LR:Reverting
+!C     COUNTERS FOR TIME ACCURATE OUTPUT
+!C     ---------------------------------
+!      OTIME = 0
+!      STIME = 0.0
+!END
  
 C     =========================================================================
 
@@ -1107,15 +1280,16 @@ C     -------------------------------------------------------------------------
 C     INITIAL TURBULENCE GENERATOR
 C     ----------------------------
 
+!START LR: Replacement LR: Reverting
 C     GENERATE FRESH INITIAL TURBULENCE
       IF(INTURB.EQ.1)CALL TURBIN
 
 C     COPY TURBULENT INFLOW VELOCITY FIELD INTO THE DOMAIN 
       IF(INTURB.EQ.2)THEN
-      
+
         DO KC = KSTAL,KSTOL
           DO JC = JSTAL,JSTOL
-            DO IC = ISTAL,ISTOL 
+            DO IC = ISTAL,ISTOL
 
               URUN(IC,JC,KC) = STORE4(IC,JC,KC)
               VRUN(IC,JC,KC) = STORE5(IC,JC,KC)
@@ -1128,6 +1302,48 @@ C     COPY TURBULENT INFLOW VELOCITY FIELD INTO THE DOMAIN
       ENDIF
 
 C     -------------------------------------------------------------------------
+
+!C     GENERATE FRESH INITIAL TURBULENCE
+!     
+!      IF(INTURB.EQ.1) THEN 
+!     
+!         CALL TURBIN
+!     
+!C     REPORT OUTPUT
+!         IF(IPROC.EQ.0)THEN
+!     
+!            OPEN(UNIT=NCREPT,FILE=FNREPT,STATUS='OLD',
+!     $           FORM='FORMATTED',POSITION='APPEND')
+!            WRITE(NCREPT,9620)
+!            WRITE(NCREPT,*)     
+!     
+!         ENDIF        
+!     
+!      ELSE IF (INTURB.GE.2)THEN
+!     
+!         CALL HC_TCXL(FNTCXL)
+!
+!         DO KC = KSTAL,KSTOL
+!            DO JC = JSTAL,JSTOL
+!               DO IC = ISTAL,ISTOL 
+!     
+!                  URUN(IC,JC,KC) = STORE4(IC,JC,KC)
+!                  VRUN(IC,JC,KC) = STORE5(IC,JC,KC)
+!                  WRUN(IC,JC,KC) = STORE6(IC,JC,KC)
+!     
+!               ENDDO
+!            ENDDO
+!         ENDDO        
+!     
+!      ELSE IF (INTURB.EQ.4) THEN 
+!
+!         CALL TGVRTX
+!
+!      ENDIF
+!          
+!C
+!-------------------------------------------------------------------------
+!END
 
 C     ADD ON THE DEFAULT MEAN VELOCITY
 C     --------------------------------
@@ -1172,8 +1388,14 @@ C     BIGGER SIZE ARRAYS
         DO JC = JSTAB,JSTOB
           DO IC = ISTAB,ISTOB
 
+!START LR: Replacement LR: Reverting
             PRUN(IC,JC,KC) = PRIN
             TRUN(IC,JC,KC) = TRIN
+!C     For a convecting vortex, change the pressure and density
+!C     distribution according to analytical solution in vlamin
+!            IF(INTURB.GE.0) PRUN(IC,JC,KC) = PRIN 
+!            TRUN(IC,JC,KC) = TRIN 
+!END
 
           ENDDO
         ENDDO
@@ -1271,6 +1493,17 @@ C     DENSITY
           ENDDO
         ENDDO
       ENDDO
+
+!START LR: Addition LR: Reverting
+!      IF (INFLAM.GE.2) THEN 
+!
+!C     Generate laminar vortex core        
+!     
+!         CALL VLAMIN
+!     
+!      ENDIF
+!END
+
 C                                                             STORE1 = T*MIX RG
 C     -------------------------------------------------------------------------
 
@@ -1419,8 +1652,10 @@ C       TO BLEND INITIAL VELOCITY AND SCALAR FIELDS
 C       WITH PREVIOUSLY DUMPED DATA
 C       -----------------------------------------------------------------------
 
+!START LR: Removal LR: Reverting
         !Vishnu: Prevent overwriting TSTEP
         TSOLD=TSTEP
+!END
 
 C       RESTART FROM FULL DUMP FILES
 C       ----------------------------
@@ -1474,15 +1709,96 @@ C         SIZE ERROR CHECK
 
         ENDIF
 #else
-        CALL READ_H5DUMP_FILES
+!START LR: Replacement
+!        CALL READ_H5DUMP_FILES
+
+C       COLLECTIVE HDF DUMP INPUT            
+        IF(NDIFMT.EQ.0)THEN
+
+            CALL HC_RESI(FNDMPO(1))
+
+C       UNFORMATTED DUMP INPUT            
+        ELSE IF(NDIFMT.EQ.1)THEN
+
+          OPEN(UNIT=NCDMPO,FILE=FNDMPO(1),STATUS='OLD',
+     +         FORM='UNFORMATTED')
+          READ(NCDMPO)NXDMAX,NYDMAX,NZDMAX,NDSPEC,
+     +         DRUN,URUN,VRUN,WRUN,ERUN,YRUN,
+     +         ETIME,TSTEP,ERROLD,ERRLDR
+
+C         SIZE ERROR CHECK
+          IF(NXDMAX.NE.NXNODE)WRITE(6,*)'Dump input size error: x'
+          IF(NYDMAX.NE.NYNODE)WRITE(6,*)'Dump input size error: y'
+          IF(NZDMAX.NE.NZNODE)WRITE(6,*)'Dump input size error: z'
+          IF(NDSPEC.NE.NSPEC)WRITE(6,*)'Dump input size error: species'
+
+          CLOSE(NCDMPO)
+
+C       FORMATTED DUMP INPUT
+        ELSE IF(NDIFMT.EQ.2)THEN
+
+          OPEN(UNIT=NCDMPO,FILE=FNDMPO(1),STATUS='OLD',FORM='FORMATTED')
+          READ(NCDMPO,*)NXDMAX,NYDMAX,NZDMAX,NDSPEC
+
+C         SIZE ERROR CHECK
+          IF(NXDMAX.NE.NXNODE)WRITE(6,*)'Dump input size error: x'
+          IF(NYDMAX.NE.NYNODE)WRITE(6,*)'Dump input size error: y'
+          IF(NZDMAX.NE.NZNODE)WRITE(6,*)'Dump input size error: z'
+          IF(NDSPEC.NE.NSPEC)WRITE(6,*)'Dump input size error: species'
+
+          DO KC = 1, NZNODE
+             DO JC = 1, NYNODE
+                DO IC = 1, NXNODE
+                   READ(NCDMPI,*)DRUN(IC,JC,KC),
+     +                  URUN(IC,JC,KC),VRUN(IC,JC,KC),WRUN(IC,JC,KC),
+     +                  ERUN(IC,JC,KC),
+     +                  (YRUN(IC,JC,KC,ISPEC),ISPEC=1,NSPEC)
+                ENDDO
+             ENDDO
+          ENDDO
+
+          READ(NCDMPO,*)ETIME,TSTEP,ERROLD,ERRLDR
+
+          CLOSE(NCDMPO)
+
+C       PARALLEL INDEPENDENT HDF INPUT
+        ELSE IF (NDIFMT.EQ.3)THEN
+
+          CALL HP_RESI(FNDMPO(1))
+
+        ENDIF
+!END
 #endif
 
         !Vishnu: TSTEP not overwritten
         if(NSTPSW==0) TSTEP=TSOLD
 
+!START LR: Addition LR: Reverting
+!C     ASSIGN ELAPSED RESTART TIME TO INITIAL TIME
+!C     -------------------------------------------
+!       
+!       STIME = ETIME
+!       OTIME = FLOOR(ETIME/(MICRO*NTDUMP))
+!       OTIME = (OTIME+1)*NTDUMP
+!END
+
 C       =======================================================================
 C       WARM START COMPLETE
 C       =======================================================================
+
+!START LR: Addition LR: Reverting
+!C     REPORT OUTPUT
+!         IF(IPROC.EQ.0)THEN
+!
+!            OPEN(UNIT=NCREPT,FILE=FNREPT,STATUS='OLD',
+!     $           FORM='FORMATTED',POSITION='APPEND')
+!            WRITE(NCREPT,*) 'Restart completed successfully. 
+!     $           Elapsed time: ',ETIME
+!            WRITE(NCREPT,*) ''
+!
+!         ENDIF
+!END
+
 
       ENDIF
 
@@ -1621,5 +1937,10 @@ C     FORMATS FOR OUTPUT OF INITIAL DATA
 9400  FORMAT(6(1PE12.4))
 9450  FORMAT(I7,1PE15.7)
 9600  FORMAT(' Actual (NSPEC) = ',I5,2X,'Max (NSPCMX) = ',I5)
+!START LR: Addition LR:Reverting
+!9610  FORMAT('Turbulent field from restart.')
+!9620  FORMAT('Turbulent field generated.')
+!9630  FORMAT('Turbulent field read from: ',A) 
+!END
 
       END

@@ -71,4 +71,4 @@ senga2: $(OBJS)
 
 # Command to clean up after
 clean: 
-	rm -f *.o senga2 core *.mod
+	rm -f *.o senga2 core *.mod ./**/*lib*.a

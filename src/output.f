@@ -31,9 +31,11 @@ C     *************************************************************************
 C     GLOBAL DATA
 C     ===========
 C     -------------------------------------------------------------------------
-#ifdef HDF5
-      USE hdf5io
-#endif
+!START LR: Removal
+!#ifdef HDF5
+!      USE hdf5io
+!#endif
+!END
       INCLUDE 'com_senga2.h'
 C     -------------------------------------------------------------------------
 
@@ -48,6 +50,9 @@ C     DIAGNOSTICS
       INTEGER NCDIAG
       PARAMETER(NCDIAG = 11)
       INTEGER IDDUMP
+!START LR: Addition
+      LOGICAL FXDUMP
+!END
 
 C     LOCAL DATA
 C     ==========
@@ -241,6 +246,7 @@ C     ======
       IF(MOD(ITIME,NTDUMP).EQ.0)THEN
           IDDUMP=ITIME/NTDUMP
        WRITE(IPDUMP,'(I5.5)') IDDUMP
+#ifndef HDF5
        WRITE(PROC,'(I4.4)') IPROC
  
        FNAME = 'output/out'//IPDUMP//PROC//PNXRES
@@ -262,6 +268,13 @@ C     ======
        WRITE(16)DRUN,URUN/DRUN,VRUN/DRUN,WRUN/DRUN,ERUN/DRUN,TTEMP,
      +          PTEMP,YTEMP,RRTE,ETIME
        CLOSE(16)
+#else
+!START LR: New
+!       WRITE(PROC,'(I4.4)') IPROC
+       FNAME = 'output/out'//IPDUMP//".h5"
+       CALL HC_DMPO(FNAME)
+!END
+#endif
        ENDIF
 
 
@@ -335,7 +348,63 @@ C         FORMATTED DUMP OUTPUT
         ENDIF
 
 #else
-        CALL WRITE_H5_DUMPFILE
+!START LR: Replacement
+!        CALL WRITE_H5_DUMPFILE
+
+         IF(NDOFMT.EQ.0) THEN
+!             CALL HC_RESO(FNDMPO(1))                                !LR: Commented out
+             CALL HC_RESO(FNDMPO(IDFLAG+1))                          !LR: New
+
+         ELSE IF (ABS(NDOFMT).EQ.1) THEN
+
+C     UNFORMATTED RESTART OUTPUT
+             INQUIRE(FILE=FNDMPO(1),EXIST=FXDUMP)
+             IF(.NOT.FXDUMP)THEN
+                OPEN(UNIT=NCDMPO,FILE=FNDMPO(1),
+     $               STATUS='NEW',FORM='UNFORMATTED')
+             ELSE
+                OPEN(UNIT=NCDMPO,FILE=FNDMPO(1),STATUS='OLD',
+     +               FORM='UNFORMATTED')
+             ENDIF
+             REWIND(NCDMPO)
+             WRITE(NCDMPO)NXNODE,NYNODE,NZNODE,NSPEC,
+     +            DRUN,URUN,VRUN,WRUN,ERUN,YRUN,
+     +            ETIME,TSTEP,ERROLD,ERRLDR
+             CLOSE(NCDMPO)
+
+         ELSE IF(ABS(NDOFMT).EQ.2) THEN
+
+C     FORMATTED RESTART OUTPUT
+             INQUIRE(FILE=FNDMPO(1),EXIST=FXDUMP)
+             IF(.NOT.FXDUMP)THEN
+                OPEN(UNIT=NCDMPO,FILE=FNDMPO(1),
+     $               STATUS='NEW',FORM='FORMATTED')
+             ELSE
+                OPEN(UNIT=NCDMPO,FILE=FNDMPO(1),STATUS='OLD',
+     +               FORM='FORMATTED')
+             ENDIF
+             REWIND(NCDMPO)
+             WRITE(NCDMPO,*)NXNODE,NYNODE,NZNODE,NSPEC
+             DO KC = 1,NZNODE
+                DO JC = 1,NYNODE
+                   DO IC = 1,NXNODE
+                      WRITE(NCDMPO,*)DRUN(IC,JC,KC),
+     +                     URUN(IC,JC,KC),VRUN(IC,JC,KC),
+     $                     WRUN(IC,JC,KC),
+     +                     ERUN(IC,JC,KC),
+     +                     (YRUN(IC,JC,KC,ISPEC),ISPEC=1,NSPEC)
+                   ENDDO
+                ENDDO
+             ENDDO
+             WRITE(NCDMPO,*)ETIME,TSTEP,ERROLD,ERRLDR
+             CLOSE(NCDMPO)
+
+         ELSE IF (ABS(NDOFMT).EQ.3) THEN
+
+             CALL HP_RESO(FNDMPO(1))
+
+         ENDIF
+!END
 #endif
 
 C       REPORT THE DUMP

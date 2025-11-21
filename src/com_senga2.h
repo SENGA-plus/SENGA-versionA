@@ -1114,3 +1114,18 @@ C     FY - FOR NON REFLECTING INFLOW
 
       COMMON/NI/RXLPRC
 C     -------------------------------------------------------------------------
+!START LR: Addition
+C     OUTPUT-------------------------------------------------------------------
+
+      DOUBLE PRECISION OMEGA(NXSIZE,NYSIZE,NZSIZE,NSPCMX),
+     +              SDIFFC(NXSIZE,NYSIZE,NZSIZE,NSPCMX)
+      COMMON/OUTVARS/OMEGA,SDIFFC
+
+      DOUBLE PRECISION STIME,MICRO,NANO
+      PARAMETER(MICRO=1.0D-6,NANO=1.0D-9)
+      INTEGER OTIME
+      COMMON/OUTH/OTIME
+      COMMON/OUTS/STIME
+
+C     OUTPUT-------------------------------------------------------------------
+!END

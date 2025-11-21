@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+h5pfc -O3 -Wall -c hc_dmpo.f
+h5pfc -O3 -Wall -c hc_resi.f
+h5pfc -O3 -Wall -c hc_reso.f
+h5pfc -O3 -Wall -c hc_tcxl.f
+h5pfc -O3 -Wall -c hc_trxl.f
+h5pfc -O3 -Wall -c hc_twxl.f
+h5pfc -O3 -Wall -c hp_dmpo.f
+h5pfc -O3 -Wall -c hp_resi.f
+h5pfc -O3 -Wall -c hp_reso.f
+#
+ar rcsv libhdf.a \
+        hc_dmpo.o hc_resi.o hc_reso.o hc_tcxl.o hc_trxl.o hc_twxl.o hp_dmpo.o hp_resi.o hp_reso.o
+#
+rm *.o
+#
+exit

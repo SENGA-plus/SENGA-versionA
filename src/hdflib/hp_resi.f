@@ -1,0 +1,106 @@
+
+      SUBROUTINE HP_RESI(FNHDFF)
+
+      USE HDF5
+      USE MPI
+      INCLUDE '../com_senga2.h'
+      
+      INTEGER, PARAMETER :: NDIM = 3, NSDIM = 1
+      INTEGER(HSIZE_T) LDIM(NDIM), ADIM(NSDIM)
+
+      INTEGER ERROR, ISPEC
+      INTEGER(HID_T) FID,GID,DID,SID,AID
+      INTEGER NXDMAX,NYDMAX,NZDMAX,NDSPEC
+      CHARACTER*60 FNHDFF
+      CHARACTER*6  PNPROC
+      CHARACTER*23  SPECVN
+      
+      INTEGER ASIZE(4)
+      DOUBLE PRECISION ATIME(2),AERROR(3)
+
+      
+C      WRITE(FNHDFF,'(A3,I6.6,A3)') 'dmp',IPROC,'.h5'
+
+      LDIM(1) = NXNODE
+      LDIM(2) = NYNODE
+      LDIM(3) = NZNODE
+
+!     INITIALIZE FORTRAN INTERFACE.
+      CALL H5OPEN_F (ERROR)
+
+!     CREATE A NEW FILE USING DEFAULT PROPERTIES.
+      CALL H5FOPEN_F(FNHDFF, H5F_ACC_RDWR_F, FID, ERROR)
+
+      ADIM(1) = 4
+      CALL H5GOPEN_F(FID,'/Grid',GID,ERROR)      
+      CALL H5AOPEN_BY_NAME_F(GID,'/Grid','Size',AID,ERROR)      
+      CALL H5AREAD_F(AID, H5T_NATIVE_INTEGER, ASIZE, ADIM, ERROR)
+      CALL H5ACLOSE_F(AID, ERROR)
+      CALL H5GCLOSE_F(GID,ERROR)      
+      NXDMAX = ASIZE(1)
+      NYDMAX = ASIZE(2)
+      NZDMAX = ASIZE(3)
+      NDSPEC = ASIZE(4)
+
+C     SIZE ERROR CHECK
+      IF(NXDMAX.NE.NXNODE)WRITE(6,*)'Dump input size error: x'
+      IF(NYDMAX.NE.NYNODE)WRITE(6,*)'Dump input size error: y'
+      IF(NZDMAX.NE.NZNODE)WRITE(6,*)'Dump input size error: z'
+      IF(NDSPEC.NE.NSPEC)WRITE(6,*)'Dump input size error: species'
+                 
+      ADIM(1) = 2
+      CALL H5GOPEN_F(FID,'/Grid',GID,ERROR)      
+      CALL H5AOPEN_BY_NAME_F(GID,'/Grid','Time',AID,ERROR)      
+      CALL H5AREAD_F(AID, H5T_NATIVE_DOUBLE, ATIME, ADIM, ERROR)
+      CALL H5ACLOSE_F(AID, ERROR)
+      CALL H5GCLOSE_F(GID,ERROR)      
+      ETIME = ATIME(1)
+      TSTEP = ATIME(2)
+
+      ADIM(1) = 2
+      CALL H5GOPEN_F(FID,'/Grid',GID,ERROR)      
+      CALL H5AOPEN_BY_NAME_F(GID,'/Grid','Error',AID,ERROR)      
+      CALL H5AREAD_F(AID, H5T_NATIVE_DOUBLE, AERROR, ADIM, ERROR)
+      CALL H5ACLOSE_F(AID, ERROR)
+      CALL H5GCLOSE_F(GID,ERROR)      
+      ERROLD = AERROR(1)
+      ERRLDR = AERROR(2)
+
+      CALL H5DOPEN_F(FID,'/Fields/D',DID,ERROR)      
+      CALL H5DREAD_F(DID, H5T_NATIVE_DOUBLE, DRUN, LDIM, ERROR)
+      CALL H5DCLOSE_F(DID, ERROR)      
+      
+      CALL H5DOPEN_F(FID,'/Fields/E',DID,ERROR)      
+      CALL H5DREAD_F(DID, H5T_NATIVE_DOUBLE, ERUN, LDIM, ERROR)
+      CALL H5DCLOSE_F(DID, ERROR)
+      
+      CALL H5DOPEN_F(FID,'/Fields/Velocity/U',DID,ERROR)      
+      CALL H5DREAD_F(DID, H5T_NATIVE_DOUBLE, URUN, LDIM, ERROR)
+      CALL H5DCLOSE_F(DID, ERROR)
+
+      CALL H5DOPEN_F(FID,'/Fields/Velocity/V',DID,ERROR)      
+      CALL H5DREAD_F(DID, H5T_NATIVE_DOUBLE, VRUN, LDIM, ERROR)
+      CALL H5DCLOSE_F(DID, ERROR)
+
+      CALL H5DOPEN_F(FID,'/Fields/Velocity/W',DID,ERROR)      
+      CALL H5DREAD_F(DID, H5T_NATIVE_DOUBLE, WRUN, LDIM, ERROR)
+      CALL H5DCLOSE_F(DID, ERROR)
+
+      DO ISPEC=1,NSPEC-1
+         
+         WRITE(SPECVN,'(A21,I2.2)') '/Fields/Composition/Y', ISPEC
+         
+         CALL H5DOPEN_F(FID,SPECVN,DID,ERROR)      
+         CALL H5DREAD_F(DID, H5T_NATIVE_DOUBLE, YRUN(:,:,:,ISPEC),
+     $        LDIM, ERROR)
+         CALL H5DCLOSE_F(DID, ERROR)
+         
+      ENDDO
+      
+      CALL H5FCLOSE_F(FID, ERROR)
+      CALL H5CLOSE_F(ERROR)
+
+      RETURN
+      END
+
+C     ----------------------------------------------- C

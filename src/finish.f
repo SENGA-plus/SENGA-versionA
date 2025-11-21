@@ -24,9 +24,11 @@ C     *************************************************************************
 C     GLOBAL DATA
 C     ===========
 C     -------------------------------------------------------------------------
-#ifdef HDF5
-      USE hdf5io
-#endif
+!START LR: Removal
+!#ifdef HDF5
+!      USE hdf5io
+!#endif
+!END
       INCLUDE 'com_senga2.h'
 C     -------------------------------------------------------------------------
 
@@ -56,9 +58,11 @@ C       END OF LOOP 1000
       ENDIF
 
 C     =========================================================================
-#ifdef HDF5
-      CALL HDF5_CLOSE
-#endif
+!START LR: Removal
+!#ifdef HDF5
+!      CALL HDF5_CLOSE
+!#endif
+!END
 C     TERMINATE PARALLEL MESSAGE PASSING
       CALL P_STOP
 
