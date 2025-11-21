@@ -1,0 +1,51 @@
+#
+# Li et al 19-step hydrogen mechanism
+#
+# Li et al 2004
+#
+Species list
+1    H2     hydrogen
+2    O2     oxygen
+3    H2O    water vapour
+4    O      oxygen atom
+5    OH     hydroxyl radical
+6    H      hydrogen atom
+7    HO2    radical   
+8    H2O2   radical
+9    N2     nitrogen
+END
+Third body list
+1     M
+O2    0.4
+H2O   6.5
+N2    0.4
+END
+Mechanism step list
+1    O2     +H              ==OH     +O         3.550E+15 -0.41   16600.0
+2    H2     +O              ==OH     +H         5.080E+04  2.67    6290.0
+3    H2     +OH             ==H2O    +H         2.160E+08  1.51    3430.0
+4    H2O    +O              ==OH     +OH        2.970E+06  2.02   13400.0
+5    H2     +M              ==H      +H      +M 4.580E+19 -1.40  104380.0
+6    O      +O      +M      ==O2     +M         6.160E+15 -0.50       0.0
+7    O      +H      +M      ==OH     +M         4.710E+18 -1.0        0.0
+8    H      +OH     +M      ==H2O    +M         3.800E+22 -2.0        0.0
+9    H      +O2     +M      ==HO2    +M         6.370E+20 -1.72     520.0 L
+9                                               1.480E+12  0.6        0.0
+10   HO2    +H              ==H2     +O2        1.660E+13  0.0      820.8
+11   HO2    +H              ==OH     +OH        7.080E+13  0.0      300.0
+12   HO2    +O              ==OH     +O2        3.250E+13  0.0        0.0
+13   HO2    +OH             ==H2O    +O2        2.890E+13  0.0     -500.0
+14   HO2    +HO2            ==H2O2   +O2        4.200E+14  0.0    11980.0 L
+14                                              1.300E+11  0.0    -1630.0
+15   H2O2   +M              ==OH     +OH     +M 1.200E+17  0.0    45500.0 L
+15                                              2.950E+14  0.0    48400.0
+16   H2O2   +H              ==H2     +HO2       2.410E+13  0.0     3970.0
+17   H2O2   +H              ==H2O    +OH        4.820E+13  0.0     7950.0
+18   H2O2   +O              ==OH     +HO2       9.550E+06  2.0     3970.0
+19   H2O2   +OH             ==H2O    +HO2       1.000E+12  0.0        0.0 L
+19                                              5.800E+14  0.0     9560.0
+END   
+Conversion factor list (length, moles, time, temp, energy to SI units)
+1.0D-2   1.0D-3   1.0D0   1.0D0   4.186798
+END
+End of file

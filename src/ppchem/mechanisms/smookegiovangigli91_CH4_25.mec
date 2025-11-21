@@ -1,0 +1,76 @@
+#
+# Smooke/Giovangigli 25-step methane mechanism 
+#
+# Lecture Notes in Physics 384, Springer 1991
+#
+Species list
+1    CH4    methane
+2    O2     oxygen
+3    CO2    carbon dioxide
+4    H2O    water vapour
+5    H2     hydrogen
+6    O      oxygen atom
+7    OH     hydroxyl radical
+8    H      hydrogen atom
+9    HO2    radical   
+10   H2O2   radical
+11   CO     carbon monoxide
+12   CH2O   radical
+13   HCO    radical
+14   CH3    methyl radical
+15   CH3O   methoxy radical
+16   N2     nitrogen
+END
+Third body list
+1     M1
+2     M2
+CH4   6.5
+O2    0.4
+CO2   1.5
+H2O   6.5
+CO    0.75
+N2    0.4
+END
+Mechanism step list
+1    O2     +H              =>OH     +O         2.000E+14  0.0    16800.0
+2    H2     +O              =>OH     +H         1.800E+10  1.0     8826.0
+3    H2     +OH             =>H2O    +H         1.170E+09  1.3     3626.0
+4    OH     +OH             =>H2O    +O         6.000E+08  1.3        0.0
+5    H      +O2     +M2     =>HO2    +M2        2.300E+18 -0.8        0.0
+6    HO2    +H              =>OH     +OH        1.500E+14  0.0     1004.0
+7    HO2    +H              =>H2     +O2        2.500E+13  0.0      700.0
+8    HO2    +OH             =>H2O    +O2        2.000E+13  0.0     1000.0
+9    CO     +OH             =>CO2    +H         1.510E+07  1.3     -758.0
+10   CH4    +M1             =>H      +CH3   +M1 6.300E+14  0.0   104000.0  L
+10                                    1.0       1.000E+17  0.0    86000.0
+11   CH4    +H              =>H2     +CH3       2.200E+04  3.0     8750.0
+12   CH4    +OH             =>H2O    +CH3       1.600E+06  2.1     2460.0
+13   CH3    +O              =>CH2O   +H         6.800E+13  0.0        0.0
+14   CH2O   +H              =>HCO    +H2        2.500E+13  0.0     3991.0
+15   CH2O   +OH             =>HCO    +H2O       3.000E+13  0.0     1195.0
+16   HCO    +H              =>CO     +H2        4.000E+13  0.0        0.0
+17   HCO    +M1             =>CO     +H     +M1 1.600E+14  0.0    14700.0
+18   CH3    +O2             =>CH3O   +O         7.000E+12  0.0    25652.0
+19   CH3O   +H              =>CH2O   +H2        2.000E+13  0.0        0.0
+20   CH3O   +M1             =>CH2O   +H     +M1 2.400E+13  0.0    28812.0
+21   HO2    +HO2            =>H2O2   +O2        2.000E+12  0.0        0.0
+22   H2O2   +M1             =>OH     +OH    +M1 1.300E+17  0.0    45500.0
+23   H2O2   +OH             =>H2O    +HO2       1.000E+13  0.0     1800.0
+24   H      +OH     +M2     =>H2O    +M2        2.200E+22 -2.0        0.0
+25   H      +H      +M2     =>H2     +M2        1.800E+18 -1.0        0.0
+26   OH     +O              =>H      +O2        1.575E+13  0.0      690.0
+27   OH     +H              =>O      +H2        8.000E+09  1.0     6760.0
+28   H2O    +H              =>H2     +OH        5.090E+09  1.3    18588.0
+29   H2O    +O              =>OH     +OH        5.900E+09  1.3    17029.0
+30   CO2    +H              =>CO     +OH        1.570E+09  1.3    22337.0
+31   CH3    +H      +M1     =>CH4    +M1        5.200E+12  0.0    -1310.0  L
+31                                    1.0       8.250E+14  0.0   -19310.0
+32   CH3    +H2             =>H      +CH4       9.570E+02  3.0     8750.0
+33   CH3    +H2O            =>OH     +CH4       3.020E+05  2.1    17422.0
+34   OH     +OH     +M1     =>H2O2   +M1        9.860E+14  0.0    -5070.0
+35   H2O    +HO2            =>H2O2   +OH        2.860E+13  0.0    32790.0
+END   
+Conversion factor list (length, moles, time, temp, energy to SI units)
+1.0D-2   1.0D-3   1.0D0   1.0D0   4.186798
+END
+End of file

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# example MPI job script for SLURM
+
+# set max wallclock time
+#SBATCH --time=48:00:00
+
+#Job name
+#SBATCH --job-name=H2_B07
+
+#Job queue
+#SBATCH --partition=defq
+####SBATCH --partition=bigmem
+####SBATCH --mem=128G
+##SBATCH --exclusive
+
+
+#Cost code
+#SBATCH -A nccstrfm
+
+
+# SLURM defaults to the directory you were working in when you submitted the job.
+# Output files are also put in this directory. To set a different working directory add:
+
+##SBATCH --workdir=/nobackup/my_directory
+
+# Tell SLURM if you want to be emailed when your job starts, ends, etc.
+# Currently mail can only be sent to addresses @ncl.ac.uk
+
+#SBATCH --mail-type=ALL
+
+#SBATCH --mail-user=yourname.yoursurname@ncl.ac.uk
+
+#number of cores used
+#SBATCH --nodes=1
+#SBATCH --ntasks=40
+
+#unset I_MPI_PMI_LIBRARY
+#set SLURM_MPI_TYPE=pmi2
+# use Intel programming tools
+#module load intel
+#
+# SLURM recommend using srun instead of mpirun for better job control.
+#mpirun -np 480 ./senga
+srun -n 40 --mpi=pmi2 ./senga2

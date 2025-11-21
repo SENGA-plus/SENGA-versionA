@@ -1,0 +1,53 @@
+ *****************************
+ *                           *
+ *  chem data file for air   *
+ *                           *
+ *****************************
+ Species list:
+    1
+    1   AIR       
+ Species data:
+  1.0000E+05
+    1  2.8840E+01
+  1.0000E+00
+    2
+  3.0000E+02  1.0000E+03    7
+  3.2806714E+00
+  1.3492821E-03
+ -3.2518246E-06
+  4.7327112E-09
+ -2.1155743E-12
+ -1.0176132E+03
+  4.3880887E+00
+  1.0000E+03  5.0000E+03    7
+  3.0885370E+00
+  1.3043408E-03
+ -4.7553173E-07
+  8.3494692E-11
+ -5.5737989E-15
+ -9.8813552E+02
+  5.3943419E+00
+ Step rate data:
+    0
+ Step species-list:
+ Step reactant-list:
+ Step product-list:
+ Step reactant coefficient-list:
+ Step product coefficient-list:
+ Species delta-list:
+ Third-body list:
+    0
+ Third-body step list:
+ Third-body efficiencies:
+ Gibbs step-list:
+    0
+ Lindemann step-list:
+    0
+ Lindemann step rate data:
+ Troe step-list:
+    0
+ Troe step rate data:
+ SRI step-list:
+    0
+ SRI step rate data:
+ End of file

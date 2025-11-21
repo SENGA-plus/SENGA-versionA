@@ -1,0 +1,33 @@
+#
+# Peters-Williams 4-step methane mechanism 
+#
+# From Peters, N. and Williams, F.A.: Combust.Flame 68, 185-207, 1987.
+#
+Species list
+1    CH4    methane
+2    O2     oxygen
+3    CO2    carbon dioxide
+4    H2O    water vapour
+5    H2     hydrogen
+6    H      hydrogen atom
+7    CO     carbon monoxide
+8    N2     nitrogen
+END
+Third body list
+1     M
+CO2   1.5
+H2O   6.5
+N2    0.4
+END
+Mechanism step list
+1    CH4    +2H    +H2O     =>CO     +4H2       2.200E+04  3.0       36.60
+2    CO     +H2O            =>CO2    +H2        2.040E+07  1.5       90.23
+3    2H     +M              =>H2     +M         2.300E+18 -0.8        0.00
+4    O2     +3H2            =>2H2O   +2H        2.000E+14  0.0       70.30
+5    CO2    +H2             =>CO     +H2O       5.830E+08  1.5      134.74
+6    2H2O   +2H             =>O2     +3H2       1.500E+09  0.0      145.05
+END   
+Conversion factor list (length, moles, time, temp, energy)
+1.0D-2   1.0D-3   1.0D0   1.0D0   1.0D3
+END
+End of file

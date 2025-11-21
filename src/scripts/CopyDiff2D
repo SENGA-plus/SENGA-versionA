@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+cp differentiators/dfbydx.f dfbydx.f
+cp differentiators/dfbydy.f dfbydy.f
+cp differentiators/dfbydz_null.f dfbydz.f
+#
+cp differentiators/d2fdx2.f d2fdx2.f
+cp differentiators/d2fdy2.f d2fdy2.f
+cp differentiators/d2fdz2_null.f d2fdz2.f
+#
+cp differentiators/d2fdxy.f d2fdxy.f
+cp differentiators/d2fdxz_null.f d2fdxz.f
+cp differentiators/d2fdyz_null.f d2fdyz.f
+#
+exit

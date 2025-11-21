@@ -1,0 +1,108 @@
+#
+# Warnatz/Sandia 68-step methane mechanism 
+#
+# From Dr JH Chen, August 1998.
+#
+Species list
+1    CH4    methane
+2    O2     oxygen
+3    CO2    carbon dioxide
+4    H2O    water vapour
+5    H2     hydrogen
+6    O      oxygen atom
+7    OH     hydroxyl radical
+8    H      hydrogen atom
+9    HO2    radical   
+10   H2O2   radical
+11   CO     carbon monoxide
+12   CH2O   radical
+13   HCO    radical
+14   CH2OH  radical
+15   CH3OH  radical
+16   CH3    methyl radical
+17   CH3O   methoxy radical
+18   N2     nitrogen
+END
+Third body list
+1     M
+CH4   6.5
+O2    0.4
+CO2   1.5
+H2O   6.5
+CO    0.75
+N2    0.4
+END
+Mechanism step list
+1    O2     +H              ==OH     +O         2.000E+14  0.0    16794.00
+2    H2     +O              ==OH     +H         5.060E+04  2.670   6283.00
+3    H2     +OH             ==H2O    +H         1.000E+08  1.600   3297.00
+4    OH     +OH             ==H2O    +O         1.500E+09  1.140    100.30
+5    H      +H      +M      ==H2     +M         1.800E+18 -1.000     0.000
+6    O      +O      +M      ==O2     +M         2.900E+17 -1.000     0.0
+7    H      +OH     +M      ==H2O    +M         2.200E+22 -2.000     0.000
+8    H      +O2     +M      ==HO2    +M         2.300E+18 -0.800     0.0
+9    HO2    +H              ==OH     +OH        1.500E+14  0.0       1003.
+10   HO2    +H              ==H2     +O2        2.500E+13  0.0       692.8
+11   HO2    +H              ==H2O    +O         3.000E+13  0.0       1720.
+12   HO2    +O              ==OH     +O2        1.800E+13  0.0      -406.
+13   HO2    +OH             ==H2O    +O2        6.000E+13  0.0       0.0
+14   HO2    +HO2            ==H2O2   +O2        2.500E+11  0.0      -1242.
+15   OH     +OH     +M      ==H2O2   +M         3.250E+22 -2.000     0.0
+16   H2O2   +H              ==H2     +HO2       1.700E+12  0.0      3751.0
+17   H2O2   +H              ==H2O    +OH        1.000E+13  0.0      3584.0
+18   H2O2   +O              ==OH     +HO2       2.803E+13  0.0      6402.0
+19   H2O2   +OH             ==H2O    +HO2       5.400E+12  0.0      1003.0
+20   CO     +OH             ==CO2    +H         6.000E+06  1.500    -741.0
+21   CO     +HO2            ==CO2    +OH        1.500E+14  0.0      23586.
+22   CO     +O      +M      ==CO2    +M         7.100E+13  0.0     -4539.0
+23   CO     +O2             ==CO2    +O         2.500E+12  0.0     47778.3
+24   HCO    +M              ==CO     +H      +M 7.100E+14  0.0     16794.0
+25   HCO    +H              ==CO     +H2        9.000E+13  0.0       0.0
+26   HCO    +O              ==CO     +OH        3.000E+13  0.0       0.0
+27   HCO    +O              ==CO2    +H         3.000E+13  0.0       0.0
+28   HCO    +OH             ==CO     +H2O       1.000E+14  0.0       0.0
+29   HCO    +O2             ==CO     +HO2       3.000E+12  0.0       0.0
+30   HCO    +HCO            ==CH2O   +CO        3.000E+13  0.0       0.0
+31   CH2O   +M              ==HCO    +H      +M 5.000E+16  0.0     76445.0
+32   CH2O   +H              ==HCO    +H2        2.300E+10  1.05     3273.0
+33   CH2O   +O              ==HCO    +OH        4.150E+11  0.57     2771.0
+34   CH2O   +OH             ==HCO    +H2O       3.400E+09  1.2      -453.9
+35   CH2O   +HO2            ==HCO    +H2O2      3.000E+12  0.0       0.0
+36   CH2O   +CH3            ==HCO    +CH4       1.000E+11  0.0     6091.70
+37   CH2O   +O2             ==HCO    +HO2       6.000E+13  0.0     40779.0
+38   CH3    +H              ==CH4               1.930E+36 -7.0     9077.8
+39   CH3    +O              ==CH2O   +H         8.430E+13  0.0       0.0
+40   CH3    +OH             =>CH3O   +H         2.260E+14  0.0     15480.
+41   CH3O   +H              =>CH3    +OH        4.750E+16 -.13     21022.2
+42   CH3    +O2             =>CH2O   +OH        3.300E+11  0.0     8935.00
+43   CH3    +HO2            ==CH3O   +OH        1.800E+13  0.0       0.0
+44   CH3    +HO2            ==CH4    +O2        3.600E+12  0.0       0.0
+45   CH3O   +M              ==CH2O   +H      +M 5.000E+13  0.0     25084.
+46   CH3O   +H              ==CH2O   +H2        1.800E+13  0.0       0.0
+47   CH3O   +O2             ==CH2O   +HO2       4.000E+10  0.0      2126.
+48   CH2O   +CH3O           =>CH3OH  +HCO       0.600E+12  0.0     29341.
+49   CH3O   +O              ==O2     +CH3       1.100E+13  0.0       0.0
+50   CH3O   +O              ==OH     +CH2O      1.400E+12  0.0       0.0
+51   CH2OH  +M              ==CH2O   +H      +M 5.000E+13  0.0     25084.
+52   CH2OH  +H              ==CH2O   +H2        3.000E+13  0.0       0.0
+53   CH2OH  +O2             ==CH2O   +HO2       1.000E+13  0.0      7167.
+54   CH4    +H              ==H2     +CH3       1.300E+04  3.000    8027.0
+55   CH4    +O              ==OH     +CH3       6.923E+08  1.560    8481.0
+56   CH4    +OH             ==H2O    +CH3       1.600E+07  1.830    2771.0
+57   CH4    +HO2            ==H2O2   +CH3       1.100E+13  0.0     24630.0
+58   CH3OH                  ==CH3    +OH        9.510E+29 -4.3     96506.5
+59   CH3OH  +H              ==CH2OH  +H2        4.000E+13  0.0     6092.
+60   CH3OH  +O              ==CH2OH  +OH        1.000E+13  0.0     4682.
+61   CH3OH  +OH             ==CH2OH  +H2O       1.000E+13  0.0     1696.
+62   CH3OH  +HO2            =>CH2OH  +H2O2      0.620E+13  0.0     19374.
+63   CH2OH  +H2O2           =>CH3OH  +HO2       1.000E+07  1.7     11443.
+64   CH3OH  +CH3            ==CH4    +CH2OH     9.000E+12  0.0     9818.
+65   CH3O   +CH3OH          =>CH2OH  +CH3OH     2.000E+11  0.0     6999.5
+66   CH2OH  +CH3OH          =>CH3O   +CH3OH     2.200E+04  1.7     10845.6
+67   CH3OH  +CH2O           =>CH3O   +CH3O      0.153E+13  0.0     79599.
+68   CH3O   +CH3O           =>CH3OH  +CH2O      3.000E+13  0.0       0.0
+END   
+Conversion factor list (length, moles, time, temp, energy to SI units)
+1.0D-2   1.0D-3   1.0D0   1.0D0   4.186798
+END
+End of file

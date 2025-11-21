@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+#  Makes a library of the parallel interface routines
+#
+#
+mpif90 -O3 -Wall -I/usr/include -c p_init.f
+mpif90 -O3 -Wall -I/usr/include -c p_stop.f
+mpif90 -O3 -Wall -I/usr/include -c p_size.f
+mpif90 -O3 -Wall -I/usr/include -c p_send.f
+mpif90 -O3 -Wall -I/usr/include -c p_recv.f
+mpif90 -O3 -Wall -I/usr/include -c p_bcst.f
+mpif90 -O3 -Wall -I/usr/include -c p_summ.f
+mpif90 -O3 -Wall -I/usr/include -c p_gmax.f
+mpif90 -O3 -Wall -I/usr/include -c p_gmin.f
+mpif90 -O3 -Wall -I/usr/include -c p_sync.f
+#
+ar rcsv parlib.a \
+        p_init.o p_stop.o p_size.o p_send.o p_recv.o \
+        p_bcst.o p_summ.o p_gmax.o p_gmin.o p_sync.o
+#
+rm *.o
+#
+exit

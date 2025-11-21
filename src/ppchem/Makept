@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+#
+#
+#
+#g77 -O -fno-silent -Wimplicit -Wall -o ppthrm \
+gfortran -O3 -Wall -o ppthrm \
+ppthrm.f parser.f chkstr.f erhand.f -lm
+#
+exit

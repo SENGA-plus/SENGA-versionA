@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+#
+#
+#
+tar zcvf ppdiff.tar code diffdata runfiles specfiles thermofiles output \
+	 Tardiff
+#
+exit

@@ -1,0 +1,59 @@
+*************************************************
+**                                             **
+**       SENGA2: Run control data file         **
+**                                             **
+*************************************************
+
+Global domain size (x,y,z) in metres
+ 1.0D-2   1.0D-3   1.0D-3
+
+Global domain size (nx,ny,nz)
+ 1001    1     1
+
+No. of processors (x,y,z)
+ 1      1      1
+
+Time step; start step, no of steps, step switch (0=fixed, 1=adaptive))
+ 1.0D-12    1   10000   1
+
+Intervals between dumps, reports, statistics, dump output (0/1=un/formatted)
+ 1000   100    1000     1
+
+Cold start switch (0=cold start, 1=restart), dump input (0/1=un/formatted)
+ 1      1
+
+Initial turbulence generator
+switch (0=off, 1=on); random seed; spectrum parameters
+ 0      1      8.51064D0   5.0D0  0.0D0  0.0D0
+
+Flame generator switch (0=off, 1=on) 
+ 0
+
+Default initial conditions
+pressure, temperature, velocity components u,v,w
+ 1.0D5   3.0D2   3.9D-1  0.0D0  0.0D0
+mass fractions
+ 2
+ 1    1.0D0
+ 2    0.0D0
+
+Global boundary condition types
+one per line: x-left; x-right; y-left; y-right; z-left; z-right
+(1=periodic; 1a=inlet; 2b=outlet; 3c=wall; a,b,c denotes BC subtype)
+(four integer and four real parameters allowed for each)
+13    1    0    0   0   3.9D-1    0.0D0    0.0D0     0.0D0
+21    0    0    0   0   1.0D5     2.87D-1  1.0D-3    0.0D0
+1     0    0    0   0   0.0D0     0.0D0    0.0D0     0.0D0
+1     0    0    0   0   0.0D0     0.0D0    0.0D0     0.0D0
+1     0    0    0   0   0.0D0     0.0D0    0.0D0     0.0D0
+1     0    0    0   0   0.0D0     0.0D0    0.0D0     0.0D0
+
+Molecular transport control data
+switches: mix.av, mol.mass, pressure, Soret, Dufour; mol.mass limit
+0     0    0    0   0   5.0D0
+
+Radiation control data
+switch, reference temperature
+0     3.0D2
+
+End of file

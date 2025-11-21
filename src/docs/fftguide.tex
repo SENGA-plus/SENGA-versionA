@@ -1,0 +1,1483 @@
+\documentclass[dvips]{article}
+\usepackage{graphics}
+\usepackage{subfig}
+\setlength{\topmargin}{0mm}
+\setlength{\textheight}{220mm}
+\setlength{\oddsidemargin}{0mm}
+\setlength{\textwidth}{160mm}
+
+\begin{document}
+
+\vspace{40mm}
+\begin{center}
+{\Large A User's Guide to Discrete Fourier Transforms}\\[3mm]
+{\large Stewart Cant}\\[3mm]
+CFD Laboratory\\
+Cambridge University Engineering Department\\
+Trumpington Street\\
+Cambridge CB2 1PZ\\[10mm]
+Report number CUED--THERMO--2012/01\\
+August 2012
+\end{center}
+
+\newpage
+\section*{Introduction}
+This document is intended as a brief guide to the discrete Fourier
+transform with emphasis on its application to Direct Numerical Simulation
+(DNS) and Large Eddy Simulation (LES) of
+turbulent flow and turbulent combustion.  The theory of the discrete Fourier
+transform is well covered in a number of standard texts and only the
+briefest outline will be given here.  For further information the reader
+is referred in particular to the comprehensive, practical and
+very readable account in
+{\it Numerical Recipes} \cite{numrec} and the classic work of Brigham
+\cite{brigham}.  The use of Fourier transforms in turbulence
+theory is discussed at length by Batchelor \cite{batchelor}, and Fourier
+pseudo--spectral methods for numerical solution of the Navier--Stokes
+equations are presented by Canuto et al. \cite{canuto} where a number of
+other popular spectral methods are also discussed.  Even where Fourier
+methods are not used as the primary means of solving the governing equations
+it is often convenient to
+establish turbulent initial or boundary conditions in terms of Fourier
+coefficients.  A good example is the method given by Orszag and
+Patterson \cite{orszagpatt}
+which is in widespread use in DNS and LES.  Similarly, Fourier methods
+are often used in diagnostic tools for the analysis of results from DNS
+and LES calculations, particularly when correlation data is required.
+
+Practical use of Fourier transform methods depends on the existence of
+the Fast Fourier Transform (FFT), for the purposes of DNS and LES
+it is necessary for the transform to be as fast as possible.  
+
+ 
+\section*{Continuous Fourier Transform}
+The Fourier transform $F(\overline{k})$ of a function $f(x)$ is defined
+together with the inverse transform as
+\begin{eqnarray}
+F(\overline{k}) & = & \int_{-\infty}^{\infty} f(x) \exp{(2\pi i
+\overline{k}x)} dx \\
+f(x) & = & \int_{-\infty}^{\infty} F(\overline{k}) \exp{(-2\pi i
+\overline{k}x)} d\overline{k}
+\end{eqnarray}
+where $\overline{k}$ is the linear wavenumber.  Note that the equivalent
+angular wavenumber is $\hat{k} = 2\pi\overline{k}$.  In general the functions
+$f(x)$ and $F(\bar{k})$ are complex--valued, and the above
+definition of the Fourier transform is valid for an infinite domain in both
+$x$--space and $\overline{k}$--space provided that the functions
+$f(x),F(\bar{k})$ satisfy
+certain mild constraints to ensure convergence of the integrals
+\cite{brigham, lighthill}.
+For present purposes it is necessary to
+restrict attention to a domain of finite length $L$, and to assume that
+the function $f(x)$ is periodic.  Then the transform
+definitions become
+\begin{eqnarray}
+F(\overline{k}) & = & \int_{0}^{L} f(x) \exp{(2\pi i
+\overline{k}x)} dx \\
+f(x) & = & \frac{1}{L}\sum_{k=-\infty}^{\infty} F(\overline{k}) \exp{(-2\pi i
+\overline{k}x)} 
+\end{eqnarray}
+in which the linear wavenumber $\overline{k}$ has become a discrete variable
+given by $\overline{k} = k/L$ where $k$ is an integer.  The discrete
+nature of the wavenumber space follows naturally from the periodicity of
+the function $f(x)$ on the finite domain of length $L$, since $L$ must be an
+exact integer multiple of the wavelength $\lambda = 1/\overline{k}$.
+Equation (4) is the definition of the classical Fourier series, with
+coefficients given by equation (3).
+
+It must be noted that there are many different variants of the Fourier
+transform, all of which share the essential feature of projecting a
+function of interest onto a set of complex exponential basis functions.
+There is no inconsistency provided that the forward and inverse
+transforms are compatible, and that some care is exercised in the
+physical interpretation of the coefficients $F(\overline{k})$.
+The present definition embodied in eqns.(1--4) is chosen for simplicity
+and ease of computational implementation, and there is evidence that
+this definition is becoming the {\it de facto} standard. 
+Variations occur mainly in terms of notation and normalisation, and some of
+the common alternative definitions are given in the Appendix.
+
+\section*{Discrete Fourier Transform}
+The Discrete Fourier Tranform (DFT) is formed by sampling the
+continuous function $f(x)$ at $N$ equally--spaced points
+along the finite interval $L$ to yield the $N$ values
+$f_{j}, j=0,\ldots ,N-1$.
+The sampling interval is $\delta x = L/N$, and the
+spatial location of the $j$-th sample is given by $x = j\delta x = jL/N$.
+The definition of the wavenumber $\overline{k}$ is unchanged, but the
+maximum wavenumber that can be resolved using $N$ samples
+is now the Nyquist wavenumber $\overline{k}_{\rm max} = N/2L$, and the
+maximum value of the wavenumber index $k$ is $N/2$.  The Nyquist
+limit arises for the fundamental reason that, for a sine wave of a given
+wavenumber, a minimum
+of two samples is required in order to repesent the amplitude and phase.
+If the continuous function $f(x)$
+contains information at higher wavenumbers than the Nyquist limit then $N$
+samples is insufficient to resolve the signal and an {\it aliasing error}
+will result.  The only cure is to increase the value of $N$.  
+The value of the Nyquist wavenumber is also
+consistent with the principle
+that the Fourier transform cannot generate new information, so that the $N$
+complex samples $f_{j}$ must transform to exactly $N$ complex 
+Fourier coefficients $F_{k}$.  
+Discretisation of the integral in (3) and truncation of the Fourier series
+(4) at the maximum wavenumber yields
+the discrete Fourier transform pair
+\begin{eqnarray}
+F_{k} & = & \delta x \sum_{j=0}^{N-1} f_{j} \exp{(2\pi ijk/N)} \\
+f_{j} & = & \frac{1}{N\delta x}\sum_{k=-N/2}^{N/2} F_{k} \exp{(-2\pi ijk/N)} 
+\end{eqnarray}
+Note that the sum in the discrete inverse transform (6) is written to
+run from $k=-N/2$ to $k=N/2$.  This reflects the existence of the
+Nyquist limit, emphasises the symmetry properties of the transform and
+is computationally convenient.  
+For even values of $N$ the range $[-N/2\ldots N/2]$ appears to
+correspond to a total of $N+1$ rather than $N$ transform elements,
+but in fact the value
+$F_{-N/2}$ is identically equal to the value $F_{N/2}$ due to the
+periodicity of the discrete transform $F_{k}$.
+For the case of $N$ odd the true limits of $k$ are $\pm (N-1)/2$, which
+automatically yields the correct total number $N$ of transform elements.
+
+\section*{Fast Fourier Transform}
+The computational cost of the DFT is rather high, since it requires at
+least $N$ multiplications and additions to evaluate each element of the
+transform, and there are $N$ transform values to compute.  Thus 
+the DFT algorithm requires $O(N^{2})$ arithmetic operations, and for large
+datasets the computational cost is prohibitive.  Fortunately there is another
+approach, based on decomposing the sum in the transform expression (5)
+or (6) into two sums each of half the length.  The forward transform becomes
+\begin{eqnarray}
+F_{k} & = & \delta x\sum_{j=0}^{N-1} f_{j} \exp{(2\pi ijk/N)} \nonumber \\
+& = & \delta x\sum_{j=0}^{N/2-1} f_{2j} \exp{(2\pi i(2j)k/N)} 
++     \delta x\sum_{j=0}^{N/2-1} f_{2j+1} \exp{(2\pi i(2j+1)k/N)} \nonumber \\
+& = & F^{0}_{k} + \exp{(2\pi i k/N)}F^{1}_{k}
+\end{eqnarray}
+where it is clear that $F^{0}_{k}$ and $F^{1}_{k}$ $(k=0\ldots
+N/2-1)$ are respectively the DFTs of the even- and odd--numbered elements
+of the original dataset $f_{j}$.
+The decomposition (7) is called the Danielson--Lanczos formula, and it may
+repeated recursively on each of $F^{0}_{k}$ and $F^{1}_{k}$
+to produce four reduced transforms $F^{00}_{k}$, $F^{01}_{k}$,
+$F^{10}_{k}$ and $F^{11}_{k}$ $(k=0\ldots N/4-1)$, and so on.
+The process results in a heirarchy of transforms each half the length of
+its predecessor until all
+that remains is a transform of length 1, which is
+simply an identity operation, i.e. $F^{b}_{1} = f_{p}$,
+where $b$ is a string of binary digits, e.g. $b = 101\ldots 010$,
+and $f_{p}$ denotes a single element of the dataset $f_{j}$.
+It is not immediately obvious which one--point transform corresponds to
+which element of $f_{j}$, and this is determined by noting that the
+application of the Danielson--Lanczos formula at each level of the
+heirarchy acts to select the even (=0) and odd (=1) elements from the
+current reduced dataset.  Each selection amounts to a test of one bit
+of the index $j$ expressed as a binary number, starting from the
+least significant bit and moving one bit higher at each level of the
+heirarchy until all bits have been tested and the one--point transform
+level has been reached.  Then
+the binary string $b$ that serves to identify each
+one--point transform also provides a record of the even--odd selections
+that were taken to arrive at that point, and is nothing less than 
+the binary representation of the single index $p$, expressed in
+bit--reversed order.  The FFT algorithm due to Cooley and Tukey
+\cite{CooleyTukey} uses this approach to rearrange the original dataset
+into bit--reversed index order, whereupon the
+Danielson--Lanczos formula is applied recursively to build up the required
+$N$-point
+transform.  The inverse transform may be computed in precisely the same
+manner, with the factor $\exp{(2\pi i k/N)}$ replaced by
+$\exp{(-2\pi i k/N)}$.
+Each application of the Danielson--Lanczos formula requires $O(N)$ operations,
+and
+the number of levels in the heirarchy is equal to the length of the
+bit--string $b$ which by definition is $\log_{2}{N}$.
+Thus the overall cost of the basic Fast Fourier Transform
+(FFT) algorithm is $O(N\log_{2}N)$ operations, which represents a very
+significant saving over the DFT.
+
+A drawback of the basic FFT algorithm 
+is that it is applicable only for a transform of length $N=2^{m}$ where $m$
+is an integer.  This is unimportant for many applications, but in other
+cases it is necessary to work with transforms whose length lies 
+inconveniently between neighbouring powers of two.  Variants of the FFT
+exist for
+transform lengths that are multiples of powers of small prime factors
+(e.g. 2, 3, 5, 7 etc.) and these can be made highly efficient.  An FFT
+algorithm for arbitrary transform lengths has been given by Bluestein
+\cite{bluestein} and retains the $O(N\log_{2}N)$ operation count.
+
+\section*{Multidimensional Fourier Transforms}
+Extension of the standard one--dimensional Fourier transform to two, three or
+higher dimensions is straightforward.  Defining $f$ as a scalar
+function of a position vector ${\bf x}$, and $F$ as a scalar function of
+a wavenumber vector ${\bf\overline{k}}$, the continuous Fourier transform
+relations between them on an infinite domain are
+\begin{eqnarray}
+F({\bf \overline{k}}) & = &
+\int_{-\infty}^{\infty} f({\bf x})
+\exp{(2\pi i {\bf \overline{k}}.{\bf x})} d{\bf x} \\
+f({\bf x}) & = & \int_{-\infty}^{\infty} F({\bf\overline{k}}) \exp{(-2\pi i
+{\bf\overline{k}}.{\bf x})} d{\bf\overline{k}}
+\end{eqnarray}
+where ${\bf\overline{k}}.{\bf x}$ is the scalar product of the position
+and wavenumber vectors, and the integrals are taken over all directions.
+Clearly this definition allows
+for Fourier transforms of any dimensionality, corresponding to the
+dimensionality of the vectors ${\bf x}$ and ${\bf\overline{k}}$.
+Restricting attention to a Cartesian vector space of dimension $M$ and 
+finite size $L_{m}$ in the $m$-th direction, the transform relations become
+\begin{eqnarray}
+F({\bf\overline{k}}) & = & \int_{0}^{L_{1}}\ldots\int_{0}^{L_{M}}
+f({\bf x}) \exp{(2\pi i {\bf \overline{k}}.{\bf x})} dx_{1}\ldots dx_{M} \\
+f({\bf x}) & = & \frac{1}{L_{1}}\ldots\frac{1}{L_{M}}
+\sum_{k_{1}=-\infty}^{\infty}\ldots\sum_{k_{M}=-\infty}^{\infty}
+F({\bf \overline{k}}) \exp{(-2\pi i {\bf\overline{k}}.{\bf x})} 
+\end{eqnarray}
+and the components of the wavenumber vector are given by
+$\overline{k}_{m} = k/L_{m}$ where $k$ is an integer.  In a Cartesian or
+other orthogonal coordinate system the multidimensional Fourier
+transform may be decomposed easily and treated as a succession
+of one--dimensional transforms:
+\begin{eqnarray}
+F(\overline{k}_{1}\ldots\overline{k}_{M}) & = & 
+\int_{0}^{L_{1}}dx_{1}\exp{(2\pi i k_{1}x_{1})}\ldots
+\nonumber \\ & &
+\int_{0}^{L_{M}}dx_{M}\exp{(2\pi i k_{M}x_{M})}
+f(x_{1}\ldots x_{M}) \\
+f(x_{1}\ldots x_{M}) & = & 
+\frac{1}{L_{1}}\sum_{k_{1}=-\infty}^{\infty}\exp{(2\pi i k_{1}x_{1})}\ldots
+\nonumber \\ & &
+\frac{1}{L_{M}}\sum_{k_{M}=-\infty}^{\infty}\exp{(2\pi i k_{M}x_{M})}
+F(\overline{k}_{1}\ldots\overline{k}_{M})
+\end{eqnarray}
+where it is implicit that there exists a succession of
+partially--transformed functions $f$ and $F$, and it is clear that the
+order in which the one--dimensional transforms are carried out is
+irrelevant.
+
+The multidimensional discrete Fourier transform relations are defined
+for a space of $M$ dimensions $m = 1\ldots M$ each containing $N_{m}$
+points.  The sampling interval in each direction is $\delta x_{m} =
+L_{m}/N_{m}$ and in the general case all directions may have different
+sizes and numbers of points.  The relations are
+\begin{eqnarray}
+F_{k_{1}\ldots k_{M}} & = &
+\delta x_{1} \sum_{j_{1}=0}^{N_{1}-1} \exp{(2\pi ij_{1}k_{1}/N_{1})}\ldots
+\nonumber \\ & &
+\delta x_{M} \sum_{j_{M}=0}^{N_{M}-1} \exp{(2\pi ij_{M}k_{M}/N_{M})}
+f_{j_{1}\ldots j_{M}} \\
+f_{j_{1}\ldots j_{M}} & = &
+\frac{1}{N_{1}\delta x_{1}}\sum_{k_{1}=-N_{1}/2}^{N_{1}/2}
+\exp{(-2\pi ij_{1}k_{1}/N_{1})}\ldots
+\nonumber \\ & &
+\frac{1}{N_{M}\delta x_{M}}\sum_{k_{M}=-N_{M}/2}^{N_{M}/2}
+\exp{(-2\pi ij_{M}k_{M}/N_{M})} 
+F_{k_{1}\ldots k_{M}}
+\end{eqnarray}
+and once again it is clear that each dimension may be treated
+separately.
+
+\section*{Generalised Prime Factor FFT Algorithm}
+An FFT algorithm suitable for dataset lengths $N =
+2^{a}3^{b}5^{c}$ where $a$,$b$ and $c$ are non--negative integers has been
+presented by Temperton \cite{temper1, temper2}.  The algorithm is
+self--sorting, requires minimal workspace, and is among the most computationally
+efficient FFTs yet developed.  Generalisation to powers of larger prime
+numbers is straightforward, although the computational cost then begins to
+increase significantly.  The algorithm is derived by considering the discrete
+Fourier transform of length $N$ written as
+\begin{equation}
+F_{k} = \sum_{j=0}^{N-1} f_{j}\omega_{N}^{jk}
+\label{DFTOMEGA}
+\end{equation}
+where $0\leq k \leq N-1$ and $\omega_{N} = \exp{(2\pi i/N)}$.  Note that
+the inverse transform may be treated in the same manner.
+
+The DFT may be expressed in
+matrix form by defining the transform matrix $W_{N}(j,k) = \omega_{N}^{jk}$,
+whereupon (\ref{DFTOMEGA}) may be rewritten as
+\[
+\underline{F} = W_{N}\underline{f}
+\]
+and many different FFT algorithms may be obtained by appropriate
+factorisation of the symmetric non--sparse matrix $W_{N}$ into products of
+sparse matrices.  The Temperton algorithm is based on the 
+decimation--in--frequency approach.  Take $N = N_{1}N_{2}$,
+and denote the corresponding reduced--order DFT matrices as
+$W_{N_{1}}$ and $W_{N_{2}}$.  A permutation matrix of order $N$ is
+defined as
+\begin{eqnarray} 
+P_{N_{2}}^{N_{1}}(j,k) & = & 1\hspace{2mm}{\rm if}\hspace{2mm}j=rN_{1}+s
+\hspace{2mm}{\rm and}\hspace{2mm}k=sN_{2}+r \nonumber\\
+& = & 0\hspace{2mm}{\rm otherwise}
+\end{eqnarray} 
+for integer values $r$ and $s$, and a diagonal matrix of order $N$
+containing the ``twiddle factors'' is defined as
+\begin{eqnarray} 
+D_{N_{2}}^{N_{1}}(j,k) & = & \omega_{N}^{sm}
+\hspace{2mm}{\rm if}\hspace{2mm}j=k=sN_{2}+m\nonumber\\
+& = & 0\hspace{2mm}{\rm otherwise.}
+\end{eqnarray} 
+Then, with identity matrices $I_{N_{1}}$ and $I_{N_{2}}$ of order
+$N_{1}$ and $N_{2}$ respectively, the order $N$ 
+DFT matrix may be factorised as
+\[
+W_{N} = \left(W_{N_{2}}\times I_{N_{1}}\right)
+P_{N_{2}}^{N_{1}}D_{N_{2}}^{N_{1}}
+\left(W_{N_{1}}\times I_{N_{2}}\right)
+\]
+where $\times$ denotes the Kronecker outer product.
+Using the matrix identity
+\[
+\left(W_{N_{2}}\times I_{N_{1}}\right)P_{N_{2}}^{N_{1}}
+= P_{N_{2}}^{N_{1}}\left(I_{N_{1}}\times W_{N_{2}}\right)
+\]
+the factorisation of $W_{N}$ becomes 
+\[
+W_{N} = P_{N_{2}}^{N_{1}}
+\left(I_{N_{1}}\times W_{N_{2}}\right)
+D_{N_{2}}^{N_{1}}
+\left(W_{N_{1}}\times I_{N_{2}}\right)
+\]
+Thus the original DFT has been
+decomposed into a sequence of operations consisting of $N_{2}$ DFTs of
+length $N_{1}$, multiplication by a set of twiddle factors,
+$N_{1}$ DFTs of length $N_{2}$, and finally a permutation.
+For the general case of $N=N_{1}N_{2}\ldots N_{n-1}N_{n}$ the factorisation 
+becomes
+\begin{equation}
+W_{N} = P_{1}P_{2}\ldots P_{n-1}P_{n}T_{n}T_{n-1}\ldots T_{2}T_{1}
+\label{GENFACT}
+\end{equation}
+in which the permutation matrices are given for stage $i, 1 \leq i \leq n$
+of the transform by
+\[
+P_{i} = \left(I_{l_{i}}\times P_{m_{i}}^{N_{i}} \right),
+\]
+and the corresponding operator matrices are
+\[
+T_{i} = I_{l_{i}}\times\left[D_{m_{i}}^{N_{i}}
+\left(W_{N_{i}}\times I_{m_{i}}\right)\right]
+\]
+where $l_{i+1} = N_{i}l_{i}$ with $l_{1} = 1$, and $m_{i} = N/l_{i+1}$.
+Note that no assumption has been made so far that restricts the values
+of the factors $N_{1}$ and $N_{2}$, and so the factorisation
+(\ref{GENFACT}) remains completely general.
+
+The usefulness of the approach becomes clear if $N$ is a power of a
+small prime factor, e.g. the radix--2 case $N = 2^{n}$.  Then $N_{i}=2$
+for all $i$, and the operator matrices become
+\begin{eqnarray}
+T_{1} & = & D_{N/2}^{2}\left(W_{2}\times I_{N/2}\right) \nonumber\\
+T_{2} & = & I_{2}\times\left[D_{N/4}^{2}
+\left(W_{2}\times I_{N/4}\right)\right] \nonumber\\
+& \ldots & \nonumber\\
+T_{n-1} & = & I_{N/4}\times\left[D_{2}^{2}
+\left(W_{2}\times I_{2}\right)\right] \nonumber\\
+T_{n} & = & I_{N/2}\times W_{2} \nonumber
+\end{eqnarray}
+for the $n$ stages of the transform.  Interpretation of the operator
+$T_{i}$ at each stage is quite straightforward.
+The first stage operator $T_{1}$
+applies a DFT of length 2 (as expressed by the matrix $W_{2}$)
+a total of $N/2$ times, with
+multiplication of each result by a twiddle factor from the list of
+$N$ values, of which $N/2$ are distinct, specified in the diagonal matrix
+$D_{N/2}^{2}$.  The second stage operator $T_{2}$ applies
+$N/4$ DFTs of length 2, with multiplication of each result by a twiddle
+factor from the list of $N/2$ values ($N/4$ distinct) in the matrix
+$D_{N/4}^{2}$,
+and carries out the entire operation twice over.  At each subsequent
+stage the number of DFTs in the first step is halved along with the
+number of distinct twiddle factors, and the entire operation is repeated
+twice as many times.  At the final stage expressed by $T_{n}$ the length
+2 DFT is repeated $N/2$ times without twiddle factors.
+It is clear that the largest DFT matrix that appears at
+any stage is $W_{2}$, and the advantage of the method is that a DFT of length 2 
+involves only a small number of additions and multiplications and hence is
+inherently fast.  Then the transform of length $N$ is
+built up by repeating the length--2 transform a total of $N/2$ times, with
+twiddle factors, at each of the $n = \log_{2}{N}$ stages so that the total
+operation count is proportional to $N\log_{2}{N}$.
+
+In the algorithm as described the results emerge from the sequence of
+transform stages in scrambled order, and the process of unscrambling is
+carried out by the sequence of permutations $P_{1}P_{2}\ldots P_{n}$
+performed at the end.  The unscrambling may be treated as a single operation
+which in a radix--2 FFT corresponds to bit--reversal, as in the
+Cooley--Tukey algorithm.  Note that the Cooley--Tukey algorithm uses
+decimation--in--time and hence the bit--reversal operation takes place at
+the beginning of the process.
+ 
+In order to produce a self--sorting transform a permutation matrix $Q_{j}^{i}$
+may be defined for each single bit--reversal operation according to
+\[
+\underline{x}' = Q_{j}^{i}\underline{x}
+\]
+whereby the vector elements $x_{\hat{k}}$ and $x_{k}$ are interchanged,
+and where the index $\hat{k}$ is obtained from $k$ by interchanging
+bits $i$ and $j$ of its binary representation. 
+Then the complete bit--reversal operation is defined as
+\[
+P_{1}P_{2}\ldots P_{n-1}P_{n} = Q_{n-1}^{0}Q_{n-2}^{1}\ldots
+Q_{n/2+1}^{n/2-2}Q_{n/2}^{n/2-1}.
+\]
+Substituting in (\ref{GENFACT}) and using the distributive properties of
+the Kronecker product it may be shown \cite{temper1} that the factorisation
+of the DFT becomes
+\[
+W_{N} = \left(Q_{n-1}^{0}T_{n}\right)\left(Q_{n-2}^{1}T_{n-1}\right)\ldots
+\left(Q_{n/2}^{n/2-1}T_{n/2+1}\right)T_{n/2}\ldots T_{2}T_{1}.
+\]
+Thus the bit--reversal operation is spread over the second half
+of the sequence of $n$ transform stages, noting that for odd $n$
+the middle stage is left untouched.  In practice the
+self--sorting transform involves pairing up the length--2 DFTs that are
+affected by the bit--reversal at each stage.  These are easily identified
+since they also turn out to have the same twiddle factor.  If the output
+values from the first element of the pair are denoted by
+$(F^{(1)}_{1},F^{(1)}_{2})$ and those of the second element by
+$(F^{(2)}_{1},F^{(2)}_{2})$, then the 
+interchange of the output values corresponds to placing them in a 
+2$\times$ 2 matrix and taking the transpose according to
+\[
+\left[
+\begin{array}{cc} %
+F^{(1)}_{1} & F^{(1)}_{2}  \\
+F^{(2)}_{1} & F^{(2)}_{2}
+\end{array}
+\right]
+\rightarrow
+\left[
+\begin{array}{cc} %
+F^{(1)}_{1} & F^{(2)}_{1}  \\
+F^{(1)}_{2} & F^{(2)}_{2}
+\end{array}.
+\right]
+\]
+Implementation of the radix--2 prime factor algorithm follows the factorisation
+(\ref{GENFACT}) quite literally.  Computational efficiency can be maximised by 
+precomputing a table of twiddle factors and by taking together at each
+stage all length--2 DFTs having the same twiddle factor.  This simplifies
+the indexing of the input data and allows the self--sorting procedure to
+take place quite naturally.
+
+Extension to the case of $N=3^{n}$ is immediate, and the largest DFT matrix
+appearing in the factorisation (\ref{GENFACT}) then becomes $W_{3}$.
+A DFT of length 3 is somewhat more complicated than that for length 2
+but remains inherently fast, and the complete transform is constructed
+as before, by repeating the length 3 transform $N/3$ times, with twiddle
+factors, at each stage.  The unscrambling process makes use of 
+``trit--reversal'', which is simply the base--3 analogue of bit--reversal,
+and the self--sorting procedure involves coupling the
+length--3 transforms in groups of three, with transposition of a 3$\times$ 3
+matrix.  Values of $N=p^{n}$ for $p>3$ may be handled in the same
+manner, and indeed $p$ is not explicitly constrained to be a
+prime number.  Nevertheless it should be noted that the computational cost of
+the necessary length--$p$ DFT rises strongly with the value of $p$, and
+this motivates the reduction of $N$ to a power of the smallest possible
+(i.e. prime) factor.
+ 
+The mixed--radix case is derived by taking
+$N=N_{1}N_{2}$ where $N_{1}$ and $N_{2}$ are now mutually prime.  Then
+it is possible to factorise the transform using a ``Ruritanian map''.  
+Each index $j$ and $k$ is to be associated with a pair of indices
+$(j_{1},j_{2})$ and $(k_{1},k_{2})$ respectively, such that
+$0\leq j_{1},k_{1}< N_{1}$ and $0\leq j_{2},k_{2}< N_{2}$.
+Defining four further integers $p,q,r,s$ such that
+\[
+pN_{2} = rN_{1} + 1;\hspace{5mm} qN_{1} = sN_{2} + 1
+\]
+where  $0<p,s<N_{1}$ and $0< q,r <N_{2}$ the Ruritanian map is given by
+\begin{eqnarray}
+j_{1} = (pj)\ {\rm mod}\ N_{1}; & & \hspace{5mm}
+j_{2} = (qj)\ {\rm mod}\ N_{2} \nonumber \\
+k_{1} = (pk)\ {\rm mod}\ N_{1}; & & \hspace{5mm}
+k_{2} = (qk)\ {\rm mod}\ N_{2} \nonumber
+\end{eqnarray}
+with inverse
+\begin{eqnarray}
+j & = & (j_{1}N_{2} + j_{2}N_{1})\ {\rm mod}\ N; \nonumber\\ 
+k & = & (k_{1}N_{2} + k_{2}N_{1})\ {\rm mod}\ N.
+\label{RURINV}
+\end{eqnarray}
+The Ruritanian map has a simple representation in tabular form.  An
+example for the case of $N=12$, i.e. $N_{1}=4$ and $N_{2}=3$, is shown in
+Table 1.
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{c|cccc}
+  & 0 & 1 & 2 & $j_{2}$ \\ \hline
+0 & 0 & 4 & 8 & \\ 
+1 & 3 & 7 & 11 & \\
+2 & 6 & 10 & 2 & \\
+3 & 9 & 1 & 5 & \\
+$j_{1}$ &   &   & & \\  
+\end{tabular}
+\end{center}
+\end{table}
+For each value of $j_{1}$ down the table the values of $j_{2}$ increase
+(modulo $N$) across the table in steps of $N/N_{2}$, and vice versa.
+This observation allows the Ruritanian map to be implemented quite easily
+through suitable indexing of the transform elements.
+
+Substituting the inverse map
+(\ref{RURINV}) into the DFT definition (\ref{DFTOMEGA}) yields
+\begin{equation}
+F(k_{1},k_{2}) = \sum_{k_{2}=0}^{N_{2}-1}
+\left[
+\sum_{k_{1}=0}^{N_{1}-1}f(j_{1},j_{2})\omega_{N_{1}}^{N_{2}j_{1}k_{1}}
+\right]
+\omega_{N_{2}}^{N_{1}j_{2}j_{2}}
+\label{PFTWOD}
+\end{equation}
+and the original one--dimensional DFT of size $N$ has been factorised
+into a two--dimensional DFT of size $N_{1}$ by $N_{2}$.  This may be
+handled in the same manner as any other two--dimensional transform.
+Clearly, if either
+of $N_{1}$ and $N_{2}$ is a power of a small prime number then the
+prime factor algorithm may be used to compute the corresponding set of
+short one--dimensional transforms.  The only
+complication arises from the appearance of the factors $N_{1}$ and
+$N_{2}$ in the exponents of $\omega$ in each of the short transforms.
+This may be interpreted as a {\it rotation} of each transform.  If a DFT of
+length $N_{i}$ is modified such that $\omega_{N_{i}}$ is replaced
+by $\omega_{N_{i}}^{r}$, where $r$ is an integer, then the transform is 
+rotated such that the ordering of the output data
+is changed from $[0,1,2,\ldots ,N_{i}-1]$ to $[0,r\ {\rm mod}\ N_{i}, 2r\
+{\rm mod}\ N_{i},\ldots ,(N_{i}-1)r\ {\rm mod}\ N_{i}]$, while the actual
+output values remain unaffected.
+
+The result (\ref{PFTWOD}) for $N=N_{1}N_{2}$ can be
+generalised quite easily to the case $N=N_{1}N_{2}\ldots N_{n}$ where all
+the $N_{i}$ are mutually prime, and converts the original
+one--dimensional transform to a $n$--dimensional transform with
+rotations: 
+\begin{eqnarray}
+& & F(k_{1},k_{2},\ldots ,k_{n}) = \nonumber\\ & &
+\sum_{k_{n}=0}^{N_{n}-1}\ldots
+\sum_{k_{2}=0}^{N_{2}-1}
+\sum_{k_{1}=0}^{N_{1}-1}
+f(j_{1},j_{2},\ldots ,j_{n})
+\omega_{N_{1}}^{j_{1}k_{1}N/N_{1}}
+\omega_{N_{2}}^{j_{2}j_{2}N/N_{2}}\ldots
+\omega_{N_{n}}^{j_{n}j_{n}N/N_{n}}.\nonumber \\
+\label{PFMULTID}
+\end{eqnarray}
+The rotated transform may be repesented by the matrix
+$W_{N}^{[r]}(j,k) = \omega_{N}^{rjk}$, which is simply the matrix $W_{N}$
+with each element raised to the power $r$.  In this notation the
+factorisation (\ref{PFMULTID}) may be written as
+\[
+W_{N} = R^{-1}\left(W_{N_{n}}^{[N/N_{n}]}\times\ldots\times
+W_{N_{2}}^{[N/N_{2}]}\times W_{N_{1}}^{[N/N_{1}]}\right)R
+\]
+where $R$ is the permutation matrix corresponding to the Ruritanian map,
+and the operator $\times$ denotes a Kronecker product.  Note that the
+rotation $N/N_{i}$ for each short transform operation is evaluated
+modulo $N_{i}$.
+The Ruritanian map can also be generalised to the case of $N=N_{1}N_{2}\ldots
+N_{n}$ simply by extending the tabular representation to $n$ dimensions,
+with increments of $N/N_{i}$ in the $i$--th dimension.  
+
+Implementation of the general case $N=N_{1}N_{2}\ldots N_{n}$, where
+each $N_{i}$ is a power of a different small prime number, requires only
+a slight
+modification to the individual radix--$i$ prime factor transforms in
+order to accommodate the necessary rotation $r_{i}$.  This is accomplished by
+raising all twiddle factors to the power $r_{i}$, and by making use of
+the indexing logic to reorder the input values to each transform. 
+
+\section*{Interpolation using Fourier Transform}
+Once the discrete Fourier transform $F_{k}$ of a sampled function $f_{j}$
+has been obtained, the transform may be used to evaluate the original
+function in a straightforward manner at points that do not necessarily coincide
+with the sample points.  If the sample points are denoted by $x=j\delta x$,
+where $\delta x$ is the sampling interval, then any other point may be
+described as $x+\Delta x = (j+\Delta j)\delta x$, where $\Delta x$ is
+the distance from $x$ and $\Delta j$ is the corresponding number of
+sampling intervals.  Normally $\Delta x < \delta x$ and $0 < \Delta j <
+1$, but this is not a necessary restriction.  The interpolation formula
+is a simple extension of the discrete inverse Fourier transform (6):
+\begin{eqnarray}
+f_{j+\Delta j} & = & \frac{1}{N\delta x}\sum_{k=-N/2}^{N/2}
+F_{k} \exp{(-2\pi ik[j+\Delta j]/N)} \nonumber \\
+& = & \frac{1}{N\delta x}\sum_{k=-N/2}^{N/2}
+\left[F_{k} \exp{(-2\pi ik\Delta j/N)}\right]\exp{(-2\pi ijk/N)} 
+\end{eqnarray}
+Thus the procedure for interpolation is to multiply each element of the
+transform $F(k)$ by the factor $\exp{(-2\pi ik\Delta j/N)}$ and then
+take the inverse transform.  Clearly this procedure is applicable only
+for a fixed $\Delta x$, i.e. a fixed offset from each sample point.  A
+common requirement is for midpoint interpolation, where $\Delta x =
+\delta x/2$ and so $\Delta j = 1/2$.
+
+\section*{Convolution using Fourier Transform}
+The convolution of two functions $f(x)$ and $g(x)$ is given by the integral 
+\begin{equation}
+c^{\rm conv}[f,g](x) = \int_{-\infty}^{\infty} f(x-x')g(x')dx'
+\end{equation}
+In general the functions $f$ and $g$ are complex--valued, but in practice
+they are often purely real.  Note that it is easy to show that
+$c^{\rm conv}[f,g](x) = c^{\rm conv}[g,f](x)$.
+The {\it convolution theorem} states that the Fourier transform
+$C^{\rm conv}[f,g](\bar{k})$ of $c^{\rm conv}[f,g](x)$ is given by
+\begin{equation}
+C^{\rm conv}[f,g](\bar{k}) = F(\bar{k})G(\bar{k})
+\end{equation}
+where $F(\bar{k})$ and $G(\bar{k})$ are the Fourier transforms of $f(x)$
+and $g(x)$ respectively.  Thus a convolution in physical space transforms to a
+simple product in wavenumber space (and vice versa).
+
+In discrete form the convolution integral becomes the sum
+\begin{equation}
+c^{\rm conv}_{j}[f,g] = \delta x \sum_{m=0}^{N-1} f_{j-m}g_{m}
+\end{equation}
+where $j = 0\ldots N-1$ and the functions $f$ and $g$ are each assumed to be
+periodic on the interval $L = N\delta x$.  The {\it discrete convolution
+theorem} states that the discrete Fourier transform
+$C^{\rm conv}_{k}[f,g]$ of $c^{\rm conv}_{j}[f,g]$ is given by
+\begin{equation}
+C^{\rm conv}_{k}[f,g] = F_{k}G_{k}
+\end{equation}
+where $F_{k}$ and $G_{k}$ are the discrete Fourier transforms of $f_{j}$
+and $g_{j}$ respectively.
+
+Evaluation of the discrete convolution (19) requires $O(N)$
+multiplications and additions for each value of $j$, and the total is
+therefore $O(N^{2})$.  This operation count may be greatly reduced by using the
+FFT to evaluate $F_{k}$ and $G_{k}$, carrying out the 
+complex multiplication in wavenumber space, and using the FFT once
+again to evaluate the inverse transform.  
+This procedure is strictly valid only if the discrete functions $f_{j}$
+and $g_{j}$ are periodic on an interval of length $N$, where $N$ is a
+suitable number (e.g. a power of two) for efficient use of the FFT.
+
+For periodic functions it is possible to rewrite the discrete
+convolution (19) as
+\begin{equation}
+c^{\rm conv}_{j}[f,g] = \delta x \sum_{m=-N/2+1}^{N/2} f_{j-m}g_{m}
+\end{equation}
+where now $j = -N/2+1\ldots N/2$.  Periodicity ensures that the values
+of $c_{j}$ in (21) for $j$ negative are precisely the same as those for
+$N/2+1 \le j \le N-1$ in the previous expression (19).  For suitable $N$
+the FFT may be applied exactly
+as before, with the interpretation that $g_{j}$ and $c_{j}$ are now
+defined for $-N/2+1 \le j \le N/2$, while $f_{j}$ remains unaffected on
+$0 \le j \le N-1$.
+
+In practice the discrete functions of interest often do not satisfy
+the requirements of periodicity on a suitable length $N$, and in order
+to allow the use of the FFT some zero--padding is required.  The
+discrete convolution is used in the form (21), and the function
+$f_{j}$ may be padded with zeros at one end from its natural length
+$N_{f}-1$ up to $N-1$.
+The function $g_{j}$ must be padded at both ends from its natural
+range $-N_{g}^{-}\ldots N_{g}^{+}$ out to $-N/2+1\ldots N/2$.
+Care must be taken to avoid contamination of the true convolution
+through end effects, and a minimum number of zeros is required equal to
+the maximum positive or negative non--zero extent of $g_{j}$, whichever is
+greater.  The convolution $c_{j}$ evaluated using this procedure is
+correct over the range $0\le j \le N_{f}-1$.  
+
+\section*{Correlation using Fourier Transform}
+The correlation of two functions $f(x)$ and $g(x)$ is given by the integral 
+\begin{equation}
+c^{\rm corr}[f,g](x) = \int_{-\infty}^{\infty} f(x+x')g(x')dx'
+\end{equation}
+Again in general the functions $f$ and $g$ are complex--valued in
+principle, and the symmetry condition for correlation is
+$c^{\rm corr}[f,g](x) = c^{\rm corr}[g,f](-x)$.
+The {\it correlation theorem} states that the Fourier transform
+$C^{\rm corr}[f,g](\bar{k})$ of $c^{\rm corr}[f,g](x)$ is given by
+\begin{equation}
+C^{\rm corr}[f,g](\bar{k}) = F(\bar{k})G(\bar{-k})
+\end{equation}
+where $F(\bar{k})$ and $G(\bar{k})$ are the Fourier transforms of $f(x)$
+and $g(x)$ respectively.
+
+The discrete correlation is given by
+\begin{equation}
+c^{\rm corr}_{j}[f,g] = \delta x \sum_{m=0}^{N-1} f_{j+m}g_{m}
+\end{equation}
+and the {\it discrete correlation
+theorem} states that the discrete Fourier transform
+$C^{\rm corr}_{k}[f,g]$ of $c^{\rm corr}_{j}[f,g]$ is given by
+\begin{equation}
+C^{\rm corr}_{k}[f,g] = F_{k}G_{-k}
+\end{equation}
+where $F_{k}$ and $G_{k}$ are the discrete Fourier transforms of $f_{j}$
+and $g_{j}$ respectively.
+
+The operation count for the evaluation of the discrete correlation (24)
+is $O(N^{2})$, and the FFT may be used as above to speed it up.  Again,
+the use of the FFT is strictly applicable only for functions $f$ and $g$
+that are periodic on a suitable length $N$.  Zero--padding may be used as
+necessary, subject to the same considerations as for the discrete convolution.
+
+\section*{Fast Fourier Transform for Arbitrary Dataset Size}
+A fast Fourier transform algorithm for an arbitrary dataset size $N$
+has been given by Bluestein \cite{bluestein}, and is sometimes called
+the chirp--z algorithm.  The forward transform is
+written as
+\begin{equation}
+F_{k} = \delta x \sum_{j=0}^{N-1}f_{j}W^{jk},
+\ k = -N/2,\ldots,N/2
+\end{equation}
+where $W = \exp{(2\pi i/N)}$, and is then expanded as
+\begin{eqnarray}
+F_{k} & = & \delta x \sum_{j=0}^{N-1}f_{j}
+W^{jk + (j^{2}-j^{2}+k^{2}-k^{2})/2} \nonumber \\
+      & = & \delta x\ W^{k^{2}/2}\sum_{j=0}^{N-1}\left(f_{j}W^{j^{2}/2}\right)
+W^{-(k-j)^{2}/2} \nonumber \\
+      & = & \delta x\ W^{k^{2}/2}\sum_{j=0}^{N-1}g_{j}h_{k-j}
+\end{eqnarray}
+where $g_{j} = f_{j}W^{j^{2}/2}$ and $h_{k-j} = W^{-(k-j)^{2}/2}$.
+Equation (27) is in the form of a discrete convolution between the
+functions $g$ and $h$.  Note that the limits on $k$ in (26) are written
+to make use of the same shorthand as the DFT in (5) and (6), and that
+the transform $F_{k}$ consists of $N$ complex elements.  Thus the
+convolution must produce $N$ uncontaminated values, and in order to do
+so the discrete function $h_{k-j}$ must be of length $2N-1$ at least.
+The convolution may be evaluated using the FFT
+algorithm as described above.  The dataset $g_{j}$ must be
+evaluated for $j=0,\ldots ,N-1$ and zero--padded, first up to $2N-1$ and
+then up to the next size suitable for efficient use of the FFT.
+It is convenient to take $k$ to run from $0$ to $N-1$ so that the dataset
+$h_{m}$ may be evaluated for the range $m=-N+1,\ldots ,N-1$, and then
+zero--padded (at both ends) up to the required size for the FFT.  With this
+choice of indexing the factors $W^{j^{2}/2}$ and $W^{k^{2}/2}$ are identical
+and also equal to the positive half of $h_{m}$.  
+The augmented datasets containing $g$ and $h$ are each transformed
+using the FFT and the product of the transforms is obtained by direct
+multiplication in the transform space.  Inverse transformation
+then yields the raw convolution
+which must be multiplied by $W^{k^{2}/2}$ to produce $F_{k}, k=
+0,\ldots ,N-1$.  Periodicity ensures
+that the elements $k = N/2+1,\ldots ,N-1$ of $F_{k}$ are identically
+equal to those for $k = -N/2+1,\ldots ,-1$.
+ 
+The inverse transform may be treated similarly.  Writing
+\begin{equation}
+f_{j} = \frac{1}{N\delta x} \sum_{k=-N/2}^{N/2}F_{k}\bar{W}^{jk},
+\ j = 0,\ldots,N-1
+\end{equation}
+where $\bar{W} = \exp{(-2\pi i/N)}$, the expansion becomes
+\begin{eqnarray}
+f_{j} & = & \frac{1}{N\delta x} \sum_{k=-N/2}^{N/2}F_{k}
+\bar{W}^{jk + (j^{2}-j^{2}+k^{2}-k^{2})/2} \nonumber \\
+      & = & \frac{1}{N\delta x}
+\bar{W}^{j^{2}/2}\sum_{k=-N/2}^{N/2}\left(F_{k}\bar{W}^{k^{2}/2}\right)
+\bar{W}^{-(j-k)^{2}/2} \nonumber \\
+  & = & \frac{1}{N\delta x} \bar{W}^{j^{2}/2}\sum_{k=-N/2}^{N/2}G_{k}H_{j-k}
+\end{eqnarray}
+where $G_{k} = F_{k}\bar{W}^{k^{2}/2}$ and $H_{j-k} = \bar{W}^{-(j-k)^{2}/2}$.
+Again, the result is in the form of a discrete convolution, and the
+evaluation proceeds in precisely the same manner as for the forward transform.
+
+\section*{Fourier Transform of Two Real Functions}
+For real--valued datasets a worthwhile saving in computational cost may be
+achieved by computing two transforms simultaneously.  Two real--valued
+datasets $f_{j}$ and $g_{j}$ each containing $N$ real numbers may be combined
+to form a single complex--valued dataset $h_{j} = f_{j} + ig_{j}$,
+containing $N$ complex numbers.  The DFT of $h_{j}$ is $H_{k}$, which
+also contains $N$ complex numbers and may be expressed as $H_{k} = F_{k}
++ iG_{k}$, where $F_{k}$ and $G_{k}$ are the DFTs of $f_{j}$ and $g_{j}$
+respectively.  It is then necessary to extract the individual transforms
+$F_{k}$ and $G_{k}$ from
+the combined transform $H_{k}$.  In general $F_{k}$ and $G_{k}$ each
+contain $N$ complex values, but since $f_{j}$ and $g_{j}$ are real the
+symmetry conditions are
+\begin{eqnarray}
+F_{k} & = & F_{N-k}^{*}\nonumber \\
+G_{k} & = & G_{N-k}^{*}
+\end{eqnarray}
+Thus $H_{N-k}^{*} = F_{N-k}^{*} - iG_{N-k}^{*} = F_{k} - iG_{k}$, and
+the real and imaginary parts of the separate transforms $F_{k}$ and
+$G_{k}$ may be expressed as
+\begin{eqnarray}
+F_{k}^{R} + iF_{k}^{I} & = & \frac{1}{2}\left(H_{N-k}^{R}+H_{k}^{R}\right)
+-\frac{1}{2}i\left(H_{N-k}^{I}-H_{k}^{I}\right) \nonumber \\
+G_{k}^{R} + iG_{k}^{I} & = & \frac{1}{2}\left(H_{N-k}^{I}+H_{k}^{I}\right)
++\frac{1}{2}i\left(H_{N-k}^{R}-H_{k}^{R}\right) 
+\end{eqnarray}
+Note that by symmetry the transform elements $F_{0}$ and $F_{N/2}$,
+and also the elements $G_{0}$ and $G_{N/2}$, are real and independent.
+Symmetry also implies that only half of each transform need be stored,
+since the other half may be generated as required using (30).
+
+Evaluation of the inverse transforms is straightforward.  The two sets
+of (complex) transform values $F_{k}$ and $G_{k}$ may be combined to
+form the single complex dataset $H_{k} = F_{k} + iG_{k}$, whereupon an
+inverse DFT at once yields $h_{j} = f_{j}+ig_{j}$.
+
+\section*{Fourier Transform of Single Real Function}
+Another way to treat a real dataset $f_{j}$, $j=0\ldots N-1$, is to pack it
+into a complex dataset
+of half the length.  Taking even and odd elements as the real and
+imaginary parts respectively produces the complex dataset
+$h_{j} = f_{2j}+if_{2j+1}$,
+$j=0\ldots N/2+1$.  The DFT is $H_{k} = F_{k}^{e} + iF_{k}^{o}$,
+$k=0\ldots N/2+1$, where $F_{k}^{e}$ ($F_{k}^{o}$) is the DFT of the
+even (odd) elements of the original dataset $f_{j}$.  Since the even and
+odd elements of $f_{j}$ each constitute a real dataset, the process of
+extracting $F_{k}^{e}$ and $F_{k}^{o}$ from $H_{k}$ is precisely the
+same as that described above for two unrelated real datasets:
+\begin{eqnarray}
+F_{k}^{eR} + iF_{k}^{eI} & = & \frac{1}{2}\left(H_{N-k}^{R}+H_{k}^{R}\right)
+-\frac{1}{2}i\left(H_{N-k}^{I}-H_{k}^{I}\right) \nonumber \\
+F_{k}^{oR} + iF_{k}^{oI} & = & \frac{1}{2}\left(H_{N-k}^{I}+H_{k}^{I}\right)
++\frac{1}{2}i\left(H_{N-k}^{R}-H_{k}^{R}\right) 
+\end{eqnarray}
+Note that by symmetry the transform elements $F_{0}^{e}$ and
+$F_{N/2}^{e}$,
+and also the elements $F_{0}^{o}$ and $F_{N/2}^{o}$, are real and independent.
+Finally, according to the
+Danielson--Lanczos formula the transform $F_{k}$ of the full original
+dataset $f_{j}$ may be recovered using
+\begin{equation}
+F_{k} = F_{k}^{e} + \exp{(2\pi i k/N)}F_{k}^{o}
+\end{equation}
+for $k=0\ldots N-1$.  By symmetry, $F_{0}$ and $F_{N/2}$ are real and
+independent, and again by symmetry it is necessary to store only half of the
+transform, since $F_{N-k}^{*} = F_{k}$.
+
+The inverse transform proceeds by evaluating the even and odd transforms
+according to
+\begin{eqnarray}
+F_{k}^{e} & = & \frac{1}{2}\left(F_{k} + F_{N/2-k}^{*}\right) \nonumber \\
+F_{k}^{o} & = & \frac{1}{2}\left(F_{k} - F_{N/2-k}^{*}\right)
+\exp{(-2\pi i k/N)}
+\end{eqnarray}
+and then forming the combined transform $H_{k} = F_{k}^{e} +
+iF_{k}^{o}$.  The inverse DFT at once yields $h_{j}$ and hence $f_{j}$.
+
+\section*{Fourier Transforms in Parallel}
+The use of parallel computers for DNS and LES is becoming widespread,
+and there is a requirement for Fourier transform methods that are
+compatible with current parallel architectures.  Fourier transformation
+is by nature an integral operation, and the DFT brings in every element of the
+transform dataset with equal weight into a single global summation.
+The heirarchical structure of the FFT algorithm is based from the outset
+on a global
+approach and again requires equal access to every element of the dataset.
+On shared--memory parallel computers there is no difficulty, since each
+processor can address all areas of memory, subject only to minor penalties
+in access time.  On distributed--memory
+architectures a large dataset must be split between the memory
+partitions associated with many different processors, and a
+message--passing strategy is normally used to transfer data from one
+partition to another.  When a processor routinely requires data from
+remote partitions this
+approach necessarily incurs much larger computational penalties, and
+makes Fourier transformation of large datasets an expensive and
+inconvenient procedure.
+
+At present the best strategy for distributed parallel Fourier transforms
+appears to lie in gathering together all of the component parts of a
+single dataset into the memory partition of a single processor.
+The transform may then be carried out locally using the FFT, and the
+component parts of the transform may then be scattered back to their points
+of origin.  Given a dataset of size $N$ divided up into $P$
+approximately equal partitions
+the computational cost is of order $2(P-1)t+N\log_{2}{N}$, where t is the
+average time to effect a data--transfer using message--passing.  A
+drawback is that this
+strategy is not scalable, in the sense that it requires sufficent memory
+to accommodate the entire dataset to be available within the memory partition
+of a single processor.  In practice this is reasonable for one--dimensional
+datasets.
+
+The development of genuinely parallel Fourier transform algorithms
+remains an active
+area of research, with emphasis on multidimensional transforms in a
+massively--parallel distributed--memory environment \cite {allan}.
+
+\section*{Note on Evaluation of Trigonometrical Functions}
+In the computation of discrete Fourier transforms it is often necessary to
+evaluate terms of the form
+\[
+\exp{(ik\theta)} = \cos{k\theta} + i\sin{k\theta}
+\]
+repeatedly for successive values of the integer $k$, while the angle
+$\theta$ remains fixed.  The
+computational cost of repeated calls to the mathematical functions
+$sin$ and $cos$ can be high, and it is significantly more
+efficient to use the recurrence relations
+\begin{eqnarray}
+\cos{k\theta} & = & \cos{\theta}\cos{(k-1)\theta}
+                    - \sin{\theta}\sin{(k-1)\theta} \nonumber \\
+\sin{k\theta} & = & \sin{\theta}\cos{(k-1)\theta}
+                    + \cos{\theta}\sin{(k-1)\theta} \nonumber 
+\end{eqnarray}
+The recurrences are initialised by evaluating $\cos{\theta}$ and
+$\sin{\theta}$ once each, and no further mathematical function calls
+are required.  Setting $\cos{k\theta}=1$ and $\sin{k\theta}=0$ for $k=0$
+the recurrences may be used to obtain sines and cosines for any positive $k$.
+
+\newpage
+\begin{thebibliography}{99}
+\bibitem{numrec}W.H. Press, S.A. Teukolsky, W.T. Vetterling, B.P. Flannery:
+{\it Numerical Recipes}, Cambridge University Press, 3rd ed., 2007.
+\bibitem{brigham}E.O. Brigham: {\it The Fast Fourier Transform},
+Prentice--Hall, 1968.
+\bibitem{batchelor} G.K. Batchelor: {\it The Theory of Homogeneous
+Turbulence}, Cambridge University Press, 1953.
+\bibitem{canuto}C. Canuto, M.Y. Hussaini, A. Quarteroni, T.A. Zang: {\it
+Spectral Methods in Fluid Dynamics}, Springer--Verlag, 1988.
+\bibitem{orszagpatt}S.A. Orszag, Numerical methods for the simulation of
+turbulence, Phys. Fluids (suppl. II), 250--257, 1969.
+\bibitem{lighthill}M.J. Lighthill: {\it Fourier Analysis and Generalised
+Functions}, Cambridge University Press, 1972.
+\bibitem{CooleyTukey}J.W. Cooley, J.W. Tukey: An algorithm for the
+machine calculation of complex Fourier series, Math. Comp. {\bf 19},
+297--301, 1965.
+\bibitem{temper1}C. Temperton: Self--sorting in--place fast Fourier
+transforms, SIAM J. Sci. Stat. Comp. {\bf 12}, 808--823, 1991.
+\bibitem{temper2}C. Temperton: A generalised prime factor FFT algorithm
+for any $N=2^{p}3^{q}5^{r}$, SIAM J. Sci. Stat. Comp. {\bf 13},
+676--686, 1992.
+\bibitem{bluestein}L.I. Bluestein: A linear filtering approach to the
+computation of the discrete Fourier transform, Nerem Record, 218--219, 1968.
+\bibitem{allan}R.J. Allan: Parallel application software on high
+performance computers: serial and parallel FFT routines, CSED Report,
+Daresbury Laboratory, UK, ISSN 1362--0193, 2nd ed., 1999.
+\end{thebibliography}
+
+\newpage
+\section*{Routines}
+A set of FORTRAN subroutines for Fourier transformation and
+related tasks has been developed and is described below.  The interface
+to each routine is given together with a brief description of its
+purpose.  Any significant workspace requirements are indicated.  The
+source code for all of these routines is freely available from the author.
+
+\subsection*{DFT routines}
+\begin{verbatim}
+SUBROUTINE DFTF1D(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine carries out a discrete Fourier transform using equation (5),
+or alternatively a discrete inverse transform using equation (6).  The
+array {\tt CARRAY} is assumed to contain {\tt NX} complex numbers
+arranged as (real part, imaginary part) pairs.  Indexing of both
+physical space and Fourier space data is standard.  The value of {\tt NX} can
+be any positive integer, even or odd, and the execution time of
+the routine scales as {\tt NX}$^{2}$ for any value of {\tt NX}.
+The routine requires one workspace array of size {\tt 2*NFTMAX} and four
+workspace arrays of size {\tt NFTMAX} which are all declared internally.  The
+value of {\tt NFTMAX} is equal to the maximum value of {\tt NX} that can be
+handled by the routine, and is set nominally to 1024.
+This value may be increased or decreased as required.
+The parameter {\tt IFORW} must be set to 1
+for a forward transform or to -1 for an inverse transform.  In either
+case the transform is returned in {\tt CARRAY} as a set of {\tt NX} complex
+numbers, with standard indexing.
+Note that the inverse transform is left unscaled, i.e. there is no
+division by {\tt NX}.\\
+
+\begin{verbatim}
+SUBROUTINE DFTP1D(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine carries out a discrete Fourier transform in exactly the
+same manner as {\tt DFTF1D}, but with the necessary sine and cosine
+functions precomputed (using subroutine {\tt DFTPIN}) in order to save
+execution time where repeated transforms are required.
+All variables are treated in the same way as for subroutine {\tt DFTF1D}.
+Workspace requirements are for one array of size {\tt 2*NFTMAX} and four
+of size {\tt NFTMAX}, with two of the smaller arrays held in {\tt COMMON}
+and shared with subroutine {\tt DFTPIN}.
+Again, {\tt NFTMAX} is set to a nominal value of 1024 but may be adjusted
+as required.\\
+
+\begin{verbatim}
+SUBROUTINE DFTPIN(NX,IFORW)
+INTEGER NX,IFORW
+\end{verbatim}
+This routine precomputes the necessary sine and cosine functions for subroutine
+{\tt DFTP1D}.
+Workspace requirements are confined to two arrays of size {\tt NFTMAX}
+held in {\tt COMMON} and shared with {\tt DFTP1D}.
+The intention is that {\tt DFTPIN} should be called once
+for each new value of {\tt NX} and/or {\tt IFORW}, thus allowing 
+repeated calls to {\tt DFTP1D} until a new size of transform or a change
+of transform type is required.
+
+\subsection*{FFT routines: Cooley--Tukey algorithm (radix 2 only)}
+\begin{verbatim}
+SUBROUTINE FFTF1D(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine computes a 1D Fast Fourier Transform using the Cooley--Tukey
+radix--2 algorithm.  {\tt NX} must be an integer power of two.  No workspace is
+required since the transform is done in place.  An upper limit on 
+{\tt NX} is fixed by the size of the bit--reversal arrays, which are set
+to a nominal size {\tt NBTMAX} = 12 integer elements corresponding to
+{\tt NX} = $2^{11}$ = 1024.  This may be changed as required.
+The execution
+time scales as {\tt NX} $\log_{2}{({\tt NX})}$ for allowed values of
+{\tt NX}.  Note that the inverse transform is left unscaled.
+
+\begin{verbatim}
+SUBROUTINE FFTB1D(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine carries out a 1D Fast Fourier Transform in exactly the
+same manner as {\tt FFTF1D}, but with the bit reversal index table
+precomputed (using subroutine {\tt FFTBIN}) in order to save
+execution time where repeated transforms are required.
+All variables are treated in the same way as for subroutine {\tt FFTF1D}.
+In particular {\tt NX} must be an integer power of two.  Workspace requirements are for one integer array of size {\tt NFTMAX}
+held in {\tt COMMON} with subroutine {\tt FFTBIN} and used to
+form the bit reversal index table. 
+Again, {\tt NFTMAX} is set to a nominal value of 1024 but may be adjusted
+as required.
+
+\begin{verbatim}
+SUBROUTINE FFTBIN(NX,IFORW)
+INTEGER NX,IFORW
+\end{verbatim}
+This routine precomputes the bit reversal index table for subroutine
+{\tt FFTB1D}.  Again, {\tt NX} must be an integer power of two.
+Workspace requirements are confined to a single integer array of size
+{\tt NFTMAX} held in {\tt COMMON} and shared with {\tt FFTB1D}.
+The intention is that {\tt FFTBIN} should be called once
+for each new value of {\tt NX} and/or {\tt IFORW}, thus allowing 
+repeated calls to {\tt FFTB1D} until a new size of transform or a change
+of transform type is required.
+
+\begin{verbatim}
+SUBROUTINE FFTR1D(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(NX)
+\end{verbatim}
+This routine computes the 1D Fast Fourier Transform of a single real--valued
+dataset.  
+{\tt CARRAY} is an array of {\tt NX} (double precision) real numbers,
+and {\tt NX} must be an
+integer power of two.  Workspace requirements are for two arrays of size {\tt
+NFTMAX}, both declared internally.  The value of {\tt NFTMAX} is set nominally
+to 1024 but may be changed if necessary.  If {\tt IFORW} is set to 1 the
+routine carries out a forward transform, taking the contents of {\tt CARRAY}
+on entry as a real dataset in physical space.  On exit, {\tt CARRAY} contains
+the {\tt NX/2} complex values
+of the positive--wavenumber half of the Fourier transform.  The indexing is
+standard, except that the first complex array element contains the (real)
+transform values corresponding to $k=0$ and $k={\tt NX/2}$.  For an inverse
+transform (with {\tt IFORW} set to -1) the data must be supplied in the same
+format.  Note that the inverse transform is left unscaled.
+
+\begin{verbatim}
+SUBROUTINE FFTT1D(ARRAY1,ARRAY2,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(NX)
+\end{verbatim}
+This routine computes the 1D Fast Fourier Transform of two real--valued
+datasets.  The interface is where each of {\tt ARRAY1} and {\tt ARRAY2} is
+an array of {\tt NX} (double precision) real numbers, and {\tt NX} must be an
+integer power of two.  Workspace requirements are for one array of size {\tt
+2*NFTMAX}, declared internally.  The value of {\tt NFTMAX} is set nominally to
+1024 but may be changed if necessary.  For a forward transform ({\tt IFORW}
+equal to 1) the contents of {\tt ARRAY1} and {\tt ARRAY2} are each taken on
+entry as a real dataset in physical space.  On exit, each array contains the
+NX/2 complex values of the positive--wavenumber half of the Fourier transform
+of the corresponding dataset.  The indexing is
+standard, except that the first complex array element contains the (real)
+transform values corresponding to $k=0$ and $k$={\tt NX/2}.  For an inverse
+transform (with {\tt IFORW} set to -1) the data must be supplied in the same
+format.  Note that the inverse transform is left unscaled.
+
+\begin{verbatim}
+SUBROUTINE FFTF2D(CARRRE,CARRIM,NXPHYS,NYPHYS,NX,NY,IFORW)
+INTEGER NXPHYS,NYPHYS,NX,NY,IFORW
+DOUBLE PRECISION CARRRE(NXPHYS,NYPHYS),CARRIM(NXPHYS,NYPHYS)
+\end{verbatim}
+This routine computes the Fourier transform of a two--dimensional dataset
+using the FFT algorithm.
+{\tt CARRRE} and {\tt CARRIM} are (double precision) real arrays
+of physical dimension {\tt NXPHYS} by {\tt NYPHYS} containing respectively
+the real and imaginary parts of the input dataset which is of size {\tt NX}
+by {\tt NY}.  Both {\tt NX} and {\tt NY} must
+be powers of two.   A single workspace array is required, of size {\tt
+NFTMAX} with {\tt NFTMAX} set nominally to 1024.  This defines the
+maximum size of any one dimension and may be changed as required.
+
+\begin{verbatim}
+SUBROUTINE FFTF3D(CARRRE,CARRIM,NXPHYS,NYPHYS,NZPHYS,NX,NY,NZ,IFORW)
+INTEGER NXPHYS,NYPHYS,NZPHYS,NX,NY,NZ,IFORW
+DOUBLE PRECISION CARRRE(NXPHYS,NYPHYS,NZPHYS)
+DOUBLE PRECISION CARRIM(NXPHYS,NYPHYS,NZPHYS)
+\end{verbatim}
+This routine computes the Fourier transform of a three--dimensional dataset
+using the FFT algorithm.
+{\tt CARRRE} and {\tt CARRIM} are (double precision) real arrays
+of size {\tt NXPHYS} by {\tt NYPHYS} by {\tt NZPHYS} containing respectively the real and
+imaginary parts of the input dataset which is of size {\tt NX} by {\tt NY} by {\tt NZ}.
+All of {\tt NX}, {\tt NY} and {\tt NZ}
+must be powers of two.   A single workspace array is required, of size {\tt
+NFTMAX} with {\tt NFTMAX} set nominally to 1024.  This defines the
+maximum size of any one dimension and may be changed as required.
+
+\begin{verbatim}
+SUBROUTINE FFTINT(CARRAY,NX,FRACT)
+INTEGER NX
+DOUBLE PRECISION CARRAY(2*NX),FRACT
+\end{verbatim}
+This routine interpolates a function using the FFT.
+{\tt CARRAY} is a complex array of size {\tt NX} containing the
+function to be interpolated.  In order to allow the use of the FFT, {\tt NX}
+must be a power of two.  The (double precision) real number {\tt FRACT} contains
+the fractional offset $\Delta x$ that defines the set of points
+$x_{j}+\Delta x$ at which to carry out the interpolation.  The
+interpolated data is returned in {\tt CARRAY}.
+
+\subsection*{Routines for convolution and correlation}
+\begin{verbatim}
+SUBROUTINE CONDIR(FFUNCT,GFUNCT,ANSWER,NX)
+INTEGER NX
+DOUBLE PRECISION FFUNCT(NX),GFUNCT(NX),ANSWER(NX)
+\end{verbatim}
+This routine computes the discrete convolution of two real--valued functions.
+{\tt FFUNCT} and {\tt GFUNCT} are (double precision) real arrays of size
+{\tt NX} containing
+the datasets whose convolution will be returned in {\tt ANSWER}.  There is no
+restriction on the value of {\tt NX}.  No workspace is required.  The execution time
+required for this routine scales as {\tt NX}$^{2}$.
+
+\begin{verbatim}
+SUBROUTINE CONFFT(FFUNCT,GFUNCT,ANSWER,NX)
+INTEGER NX
+DOUBLE PRECISION FFUNCT(NX),GFUNCT(NX),ANSWER(NX)
+\end{verbatim}
+This routine computes the discrete convolution of two real--valued functions
+using the FFT algorithm.
+{\tt FFUNCT} and {\tt GFUNCT} are (double precision) real arrays of size
+{\tt NX} containing
+the datasets whose correlation will be returned in {\tt ANSWER}.  The value of
+{\tt NX} must be an integer power of two.  The workspace requirement is for two
+arrays of size {\tt 2*NFTMAX}, both declared internally.  The execution time
+required for this routine scales as {\tt NX} $\log_{2}{({\tt NX})}$ for allowed
+values of {\tt NX}.
+
+\begin{verbatim}
+SUBROUTINE CORDIR(FFUNCT,GFUNCT,ANSWER,NX)
+INTEGER NX
+DOUBLE PRECISION FFUNCT(NX),GFUNCT(NX),ANSWER(NX)
+\end{verbatim}
+This routine computes the discrete correlation between two real--valued
+functions.
+{\tt FFUNCT} and {\tt GFUNCT} are (double precision) real arrays of size
+{\tt NX} containing
+the datasets whose correlation will be returned in {\tt ANSWER}.  There is no
+restriction on the value of {\tt NX}.  No workspace is required.  The execution
+time required for this routine scales as {\tt NX}$^{2}$.
+
+\begin{verbatim}
+SUBROUTINE CORFFT(FFUNCT,GFUNCT,ANSWER,NX)
+INTEGER NX
+DOUBLE PRECISION FFUNCT(NX),GFUNCT(NX),ANSWER(NX)
+\end{verbatim}
+This routine computes the discrete correlation between two real--valued functions
+using the FFT algorithm.
+{\tt FFUNCT} and {\tt GFUNCT} are (double precision) real arrays of size
+{\tt NX} containing
+the datasets whose correlation will be returned in {\tt ANSWER}.  The value of
+{\tt NX} must be an integer power of two.  The workspace requirement is for two
+arrays of size {\tt 2*NFTMAX}, both declared internally.  The execution time
+required for this routine scales as {\tt NX} $\log_{2}{({\tt NX})}$ for allowed
+values of {\tt NX}.
+
+\subsection*{FFT Routines: Bluestein algorithm (arbitrary length)}
+\begin{verbatim}
+SUBROUTINE FFTC1D(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine computes a 1D discrete Fourier transform using the convolutive
+method described above.
+{\tt CARRAY} contains complex data as for {\tt DFTF1D} and {\tt FFTF1D},
+and {\tt NX} may take any value.  Three workspace arrays are required,
+one of size {\tt -NFTMAX:NFTMAX} and two of size
+{\tt 2*NFTMAX}, and these are declared internally.  The value of {\tt NFTMAX} is
+set nominally to 1024, but this may be changed if necessary.  Execution
+time for this routine scales as {\tt NT} $\log_{2}{({\tt NT})}$ where {\tt NT}
+is the smallest integer power of two greater than {\tt 2*NX-1}.  Note that
+the inverse transform is left unscaled.
+
+\begin{verbatim}
+SUBROUTINE FFTP1D(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine carries out a discrete Fourier transform in exactly the
+same manner as {\tt FFTC1D}, but with the necessary coefficient functions
+precomputed (using subroutine {\tt FFTPIN}) in order to save
+execution time where repeated transforms are required.
+All variables are treated in the same way as for subroutine {\tt FFTC1D}.
+Workspace requirements are for one array of size {\tt -NFTMAX:NFTMAX}
+and two arrays of size {\tt 2*NFTMAX}, all
+held in {\tt COMMON} and shared with subroutine {\tt FFTPIN}.
+Again, {\tt NFTMAX} is set to a nominal value of 1024 but may be adjusted
+as required.
+
+\begin{verbatim}
+SUBROUTINE FFTPIN(NX,IFORW)
+INTEGER NX,IFORW
+\end{verbatim}
+This routine precomputes the necessary coefficient functions for subroutine
+{\tt FFTP1D}.
+Workspace requirements are for one array of size {\tt -NFTMAX:NFTMAX}
+and two arrays of size {\tt 2*NFTMAX}, all
+held in {\tt COMMON} and shared with {\tt FFTP1D}.
+The intention is that {\tt FFTPIN} should be called once
+for each new value of {\tt NX} and/or {\tt IFORW}, thus allowing 
+repeated calls to {\tt FFTP1D} until a new size of transform or a change
+of transform type is required.
+
+\begin{verbatim}
+SUBROUTINE FFTA1D(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine computes a 1D discrete Fourier transform using either the
+FFT or the convolutive method described above.
+{\tt CARRAY} contains complex data as for {\tt FFTF1D} and {\tt FFTC1D},
+and {\tt NX} may take any value.  Workspace arrays are required as for
+both of these routines.  If {\tt NX} is a power of two then the FFT is
+used, otherwise the convolutive algorithm is selected.
+
+\subsection*{FFT routines: Temperton algorithm}
+\begin{verbatim}
+SUBROUTINE FFTPF2(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine computes the fast Fourier transform using the Temperton
+prime factor algorithm.
+{\tt NX} must be an integer power of two.  No workspace
+is required since the transform is done in place, but two arrays each of
+length {\tt NFTMAX} are used internally to store trigonometric factors.
+{\tt NFTMAX} is set nominally to 1024 and may be changed if required.
+
+\begin{verbatim}
+SUBROUTINE FFTPF3(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTPF2}, but for {\tt NX} equal to an integer power of 3.\\
+
+\begin{verbatim}
+SUBROUTINE FFTPF5(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTPF2}, but for {\tt NX} equal to an integer power of 5.\\
+
+\begin{verbatim}
+SUBROUTINE FFTPF7(CARRAY,NX,IFORW)
+INTEGER NX,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTPF2}, but for {\tt NX} equal to an integer power of 7.\\
+
+\begin{verbatim}
+SUBROUTINE FFTPFA(CARRAY,NX,IFORW,NRADIX)
+INTEGER NX,IFORW,NRADIX
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTPF2}, but for {\tt NX} equal to an integer power of an
+arbitrary radix specified as {\tt NRADIX}.  The maximum
+value of {\tt NRADIX} is defined internally as {\tt NRDXMX} which is set
+nominally to 11.  This value may be changed as required.
+
+\subsection*{FFT routines: Temperton algorithm with rotations}
+\begin{verbatim}
+SUBROUTINE FFTPR2(CARRAY,NX,NI,IFORW)
+INTEGER NX,NI,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine computes the fast Fourier transform using the Temperton
+prime factor algorithm with rotations.
+{\tt NX} must be an integer power of two, and {\tt NI} is the
+value of the required rotation.  No workspace
+is required since the transform is done in place, but two arrays each of
+length {\tt NFTMAX} are used internally to store trigonometric factors.
+{\tt NFTMAX} is set nominally to 1024 and may be changed if required.
+
+\begin{verbatim}
+SUBROUTINE FFTPR3(CARRAY,NX,NI,IFORW)
+INTEGER NX,NI,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTPR2}, but for {\tt NX} equal to an integer power of 3.\\
+
+\begin{verbatim}
+SUBROUTINE FFTPR5(CARRAY,NX,NI,IFORW)
+INTEGER NX,NI,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTPR2}, but for {\tt NX} equal to an integer power of 5.\\
+
+\begin{verbatim}
+SUBROUTINE FFTPR7(CARRAY,NX,NI,IFORW)
+INTEGER NX,NI,IFORW
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTPR2}, but for {\tt NX} equal to an integer power of 7.\\
+
+\begin{verbatim}
+SUBROUTINE FFTPRA(CARRAY,NX,NI,IFORW,NRADIX)
+INTEGER NX,NI,IFORW,NRADIX
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTPR2}, but for {\tt NX} equal to an integer power of an
+arbitrary radix specified as {\tt NRADIX}.  The maximum
+value of {\tt NRADIX} is defined internally as {\tt NRDXMX} which is set
+nominally to 11.  This value may be changed as required.\\
+
+\subsection*{FFT routines: Temperton algorithm with precomputed rotations}
+\begin{verbatim}
+SUBROUTINE FFTFR2(CARRAY,NX)
+INTEGER NX
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine computes the fast Fourier transform using the Temperton
+prime factor algorithm with precomputed rotations, and must be initialised
+using subroutine {\tt FFTNR2}.
+{\tt NX} must be an integer power of two.  No workspace
+is required since the transform is done in place, but two arrays each of
+length {\tt NFTMAX} are held in {\tt COMMON} with subroutine {\tt FFTNR2} to
+store trigonometric factors.
+NFTMAX is set nominally to 1024 and may be changed if required.
+
+\begin{verbatim}
+SUBROUTINE FFTFR3(CARRAY,NX)
+INTEGER NX
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTFR2}, but for {\tt NX} equal to an integer power of 3.
+Initialised by subroutine {\tt FFTNR3}.\\
+
+\begin{verbatim}
+SUBROUTINE FFTFR5(CARRAY,NX)
+INTEGER NX
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTFR2}, but for {\tt NX} equal to an integer power of 5.
+Initialised by subroutine {\tt FFTNR5}.\\
+
+\begin{verbatim}
+SUBROUTINE FFTFR7(CARRAY,NX)
+INTEGER NX
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTFR2}, but for {\tt NX} equal to an integer power of 7.
+Initialised by subroutine {\tt FFTNR7}.\\
+
+\begin{verbatim}
+SUBROUTINE FFTFRA(CARRAY,NX)
+INTEGER NX,NRADIX
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+As {\tt FFTFR2}, but for {\tt NX} equal to an integer power of an
+arbitrary radix.  Initialised by subroutine {\tt FFTNRA}.
+{\tt NX} must be an integer power of the radix specified in the
+call to subroutine {\tt FFTNRA}.  The maximum
+value of the radix is defined internally as {\tt NRDXMX} which is set
+nominally to 11.  This value may be changed as required.
+
+\begin{verbatim}
+SUBROUTINE FFTNR2(NX,NI,IFORW)
+INTEGER NX,NI,IFORW
+\end{verbatim}
+This routine precomputes the rotated
+trigonometric functions for subroutine {\tt FFTNR2}.
+{\tt NX} must be an integer power of two and {\tt NI} is the
+required rotation.  Two arrays each of
+length {\tt NFTMAX} are held in {\tt COMMON} with subroutine {\tt
+FFTFR2}.
+The intention is that {\tt FFTNR2} should be called once
+for each new value of {\tt NX}, {\tt NI} and/or {\tt IFORW}, thus allowing 
+repeated calls to {\tt FFTFR2} until a new size of transform, a new
+rotation or a change of transform type is required.
+
+\begin{verbatim}
+SUBROUTINE FFTNR3(NX,NI,IFORW)
+INTEGER NX,NI,IFORW
+\end{verbatim}
+As {\tt FFTNR2} but for initialisation of radix 3 subroutine {\tt
+FFTFR3}.\\
+
+\begin{verbatim}
+SUBROUTINE FFTNR5(NX,NI,IFORW)
+INTEGER NX,NI,IFORW
+\end{verbatim}
+As {\tt FFTNR2} but for initialisation of radix 5 subroutine {\tt
+FFTFR5}.\\
+
+\begin{verbatim}
+SUBROUTINE FFTNR7(NX,NI,IFORW)
+INTEGER NX,NI,IFORW
+\end{verbatim}
+As {\tt FFTNR2} but for initialisation of radix 7 subroutine {\tt
+FFTFR7}.\\
+
+\begin{verbatim}
+SUBROUTINE FFTNRA(NX,NI,IFORW,NRADIX)
+INTEGER NX,NI,IFORW,NRADIX
+\end{verbatim}
+This routine precomputes that rotated trigonometric functions for
+subroutine {\tt FFTFRA}.
+The maximum value of the radix {\tt NRADIX} is defined internally as
+{\tt NRDXMX} which is set nominally to 11.  This value may be changed as
+required.
+
+\subsection*{FFT routines: multiple radix Temperton algorithm}
+\begin{verbatim}
+SUBROUTINE FFTFFG(CARRAY,NX)
+INTEGER NX
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine computes a fast Fourier transform using the Temperton prime
+factor algorithm for dataset length {\tt NX} = $2^{p}3^{q}5^{r}7^{s}11^{t}$.
+It is initialised by subroutine {\tt FFTNFG}.
+This routine calls subroutines {\tt FFTFR2}, {\tt FFTFR3}, {\tt FFTFR5},
+{\tt FFTFR7} and {\tt FFTFRA}.
+
+\begin{verbatim}
+SUBROUTINE FFTNFG(NX,IFORW)
+INTEGER NX,IFORW
+\end{verbatim}
+This routine initialises subroutine {\tt FFTFFG}.  It calls subroutines
+{\tt FFTNR2}, {\tt FFTNR3}, {\tt FFTNR5}, {\tt FFTNR7} and {\tt FFTNRA}.
+
+\subsection*{FFT routines: Arbitrary length datasets (Temperton/Bluestein)}
+\begin{verbatim}
+SUBROUTINE FFTGEN(CARRAY,NX)
+INTEGER NX
+DOUBLE PRECISION CARRAY(2*NX)
+\end{verbatim}
+This routine computes a fast Fourier transform using the Temperton prime
+factor algorithm for dataset length {\tt NX} =
+$2^{p}3^{q}5^{r}7^{s}11^{t}$, and the Bluestein algorithm for all other
+dataset lengths. 
+It is initialised by subroutine {\tt FFTGIN}, and 
+calls subroutines {\tt FFTFR2}, {\tt FFTFR3}, {\tt FFTFR5},
+{\tt FFTFR7}, {\tt FFTFRA} and {\tt FFTP1D}.  Also requires subroutine {\tt
+FFTF1D}.
+
+\begin{verbatim}
+SUBROUTINE FFTGIN(NX,IFORW)
+INTEGER NX,IFORW
+\end{verbatim}
+This routine initialises subroutine {\tt FFTGEN}, and calls subroutines
+{\tt FFTNR2}, {\tt FFTNR3}, {\tt FFTNR5},
+{\tt FFTNR7}, {\tt FFTNRA} and {\tt FFTPIN}.  Also requires subroutine
+{\tt FFTF1D}.
+
+\end{document}

@@ -1,0 +1,139 @@
+      SUBROUTINE FFTPIN(NX,IFORW)
+
+C     *************************************************************************
+C
+C     FFTPIN
+C     ======
+C
+C     AUTHOR
+C     ------
+C     R.S.CANT  --  CAMBRIDGE UNIVERSITY ENGINEERING DEPARTMENT
+C
+C     CHANGE RECORD
+C     -------------
+C     14-SEP-1998:  CREATED
+C     31-DEC-2004:  RSC MINOR MODIFICATIONS FOR PORTABILITY
+C
+C     DESCRIPTION
+C     -----------
+C     CARRIES OUT AN FFT IN 1D
+C     ARBITRARY DOMAIN SIZE
+C     USES THE BLUESTEIN CONVOLUTION FORMULA
+C
+C     REFERENCES
+C     ----------
+C     1) BRIGHAM,EO: "THE FAST FOURIER TRANSFORM" PRENTICE-HALL 1974
+C
+C     *************************************************************************
+
+C     GLOBAL DATA
+C     FBTCOM-------------------------------------------------------------------
+
+      INTEGER NFTMAX
+      PARAMETER(NFTMAX=2048)
+
+      DOUBLE PRECISION WPFACT(-NFTMAX:NFTMAX)
+
+      DOUBLE PRECISION DATFFT(2*NFTMAX)
+      DOUBLE PRECISION HFUNCT(2*NFTMAX)
+
+      DOUBLE PRECISION FFFACT
+      INTEGER NXFFT,NXFDBL
+
+      COMMON/FBTCOM/DATFFT,WPFACT,HFUNCT,FFFACT,NXFFT,NXFDBL
+
+C     FBTCOM-------------------------------------------------------------------
+
+
+C     PARAMETERS
+C     ==========
+      DOUBLE PRECISION ZERO,ONE,FOUR
+      PARAMETER(ZERO=0.0D0, ONE=1.0D0, FOUR=4.0D0)
+      INTEGER IPOS,INEG
+      PARAMETER(IPOS=1, INEG=-1)
+
+
+C     ARGUMENTS
+C     =========
+      INTEGER NX,IFORW
+
+
+C     LOCAL DATA
+C     ==========
+      DOUBLE PRECISION ARGMNT,REALNX,PI
+      DOUBLE PRECISION PIFACT,GAMMA
+      DOUBLE PRECISION DLOG2
+      INTEGER IC,IRE,IIM
+      INTEGER KC,KRE,KIM
+      INTEGER NXFTLO,NXFTHI
+      INTEGER NXFHLF,IGAMMA
+
+
+C     BEGIN
+C     =====
+
+C     SET VALUE OF PI
+      PI = FOUR*ATAN(ONE)
+
+C     RSC 31-DEC-2004 INITIALISE DLOG2
+      DLOG2=LOG(2.0D0)
+
+C     SET FFT SIZE LIMITS
+      NXFFT = 2*NX-1
+      GAMMA = LOG(REAL(NXFFT))/DLOG2
+      IGAMMA = 1+INT(GAMMA)
+      NXFFT = NINT(EXP(IGAMMA*DLOG2))
+
+C     USEFUL FACTORS
+      NXFDBL = NXFFT*2
+      NXFHLF = NXFFT/2
+      REALNX = REAL(NX)
+      PIFACT = REAL(IFORW)*PI/REALNX
+      FFFACT = ONE/REAL(NXFFT)
+
+C     CONVOLUTION LIMITS
+      NXFTLO = -NX+1
+      NXFTHI = NX-1
+
+C     EVALUATE W-FACTORS
+      DO IC = -NXFFT, NXFFT
+        WPFACT(IC) = ZERO
+      ENDDO
+      DO IC = NXFTLO, NXFTHI
+        ARGMNT = REAL(IC)
+        ARGMNT = PIFACT*ARGMNT*ARGMNT
+        IIM = 2*IC
+        IRE = IIM-1
+        WPFACT(IRE) = COS(ARGMNT)
+        WPFACT(IIM) = SIN(ARGMNT)
+      ENDDO
+
+C     EVALUATE AND WRAP H-FUNCTION
+      DO IC = 1,NXFFT
+        IIM = 2*IC
+        IRE = IIM-1
+        KC = IC-1
+        IF(KC.GT.NXFHLF)KC = KC-NXFFT
+        KIM = 2*KC
+        KRE = KIM-1
+        HFUNCT(IRE) =  WPFACT(KRE)
+        HFUNCT(IIM) = -WPFACT(KIM)
+      ENDDO
+
+C     FFT H-FUNCTION
+      CALL FFTF1D(HFUNCT,NXFFT,IPOS)
+
+C     SHIFT THE POSITIVE W-FACTORS
+      DO IC = NX,1,-1
+        IIM = 2*IC
+        IRE = IIM-1
+        KC = IC-1
+        KIM = 2*KC
+        KRE = KIM-1
+        WPFACT(IRE) = WPFACT(KRE)
+        WPFACT(IIM) = WPFACT(KIM)
+      ENDDO
+
+
+      RETURN
+      END

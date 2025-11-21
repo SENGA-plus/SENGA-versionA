@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+#
+#
+#
+cp dmpi0001.dat tcxl000.dat
+cp dmpi0011.dat tcxl001.dat
+cp dmpi0021.dat tcxl002.dat
+cp dmpi0031.dat tcxl003.dat
+cp dmpi0041.dat tcxl004.dat
+cp dmpi0051.dat tcxl005.dat
+cp dmpi0061.dat tcxl006.dat
+cp dmpi0071.dat tcxl007.dat
+#
+exit

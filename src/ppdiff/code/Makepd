@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+#
+#
+#
+gfortran -O3 -Wall -o ppdiff ppdiff.f \
+fndchk.f pdspec.f pdthmo.f pddiff.f pdcoll.f \
+moltab.f visdat.f difdat.f condat.f tdrdat.f outmol.f \
+nondim.f \
+cubint.f polfit.f \
+svdfit.f svdcmp.f svbksb.f svdvar.f pythag.f bfunct.f \
+parser.f chkstr.f erhand.f -lm
+#
+exit

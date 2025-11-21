@@ -1,0 +1,78 @@
+      FUNCTION RANUNI(ISEED)
+ 
+C     *************************************************************************
+C
+C     RANUNI
+C     ======
+C
+C     AUTHOR
+C     ------
+C     R.S.CANT
+C
+C     CHANGE RECORD
+C     -------------
+C     24-AUG-1994:  CREATED
+C     28-MAR-1997:  RSC UPDATE FOR SENGA
+C     26-JUN-1999:  RSC MINOR UPDATES
+C
+C     DESCRIPTION
+C     -----------
+C     UNIVARATE UNIFORM RANDOM NUMBER GENERATOR
+C     BASED ON NUMERICAL RECIPES ROUTINE 'RAN1'
+C     MUST BE INITIALISED BY A CALL TO SUBROUTINE RANINI
+C
+C     REFERENCES
+C     ----------
+C     NUMERICAL RECIPES 1st Ed, CUP (1986) pp195-199
+C
+C     *************************************************************************
+
+
+C     FUNCTION
+C     ========
+      DOUBLE PRECISION RANUNI
+
+
+C     ARGUMENT
+C     ========
+      INTEGER ISEED
+
+
+C     PARAMETERS
+C     ==========
+      INTEGER INTM1,INTA1,INTC1,INTM2,INTA2,INTC2,INTM3,INTA3,INTC3
+      PARAMETER(INTM1 = 259200, INTA1 = 7141, INTC1 = 54773)
+      PARAMETER(INTM2 = 134456, INTA2 = 8121, INTC2 = 28411)
+      PARAMETER(INTM3 = 243000, INTA3 = 4561, INTC3 = 51349)
+
+
+C     SAVED DATA
+C     ==========
+      INTEGER NSHUFF
+      PARAMETER(NSHUFF = 97)
+      INTEGER INTX1,INTX2,INTX3
+      DOUBLE PRECISION SHUFFL(NSHUFF)
+      COMMON/RANCOM/SHUFFL,INTX1,INTX2,INTX3
+
+
+C     LOCAL DATA
+C     ==========
+      INTEGER IC
+
+
+C     BEGIN
+C     =====
+      INTX1 = MOD(INTA1*INTX1+INTC1,INTM1)
+      INTX2 = MOD(INTA2*INTX2+INTC2,INTM2)
+      INTX3 = MOD(INTA3*INTX3+INTC3,INTM3)
+      IC = 1 + (NSHUFF*INTX3)/INTM3
+C      IF((IC.LT.1).OR.(IC.GT.NSHUFF))THEN
+C        WRITE(6,*)'FATAL ERROR IN RANUNI'
+C        STOP
+C      ENDIF
+      RANUNI = SHUFFL(IC)
+      SHUFFL(IC) = (REAL(INTX1)+REAL(INTX2)/REAL(INTM2))/REAL(INTM1)
+
+
+      RETURN
+      END

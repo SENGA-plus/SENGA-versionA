@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Make stub library for MPI calls
+#
+#
+mpif77 -O3 -Wall -c p_init.f
+mpif77 -O3 -Wall -c p_stop.f
+#
+mpif77 -O3 -Wall -c p_gmax.f
+mpif77 -O3 -Wall -c p_gmin.f
+mpif77 -O3 -Wall -c p_summ.f
+#
+mpif77 -O3 -Wall -c p_bcst.f
+#
+mpif77 -O3 -Wall -c p_send.f
+mpif77 -O3 -Wall -c p_recv.f
+#
+mpif77 -O3 -Wall -c p_size.f
+mpif77 -O3 -Wall -c p_sync.f
+#
+ar rcsv mpi_stub.a \
+        p_init.o p_stop.o \
+        p_gmax.o p_gmin.o p_summ.o \
+        p_bcst.o \
+        p_send.o p_recv.o \
+        p_size.o p_sync.o
+#
+rm *.o
+#
+exit

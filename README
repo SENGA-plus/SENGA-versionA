@@ -1,0 +1,47 @@
+Version A: The code that was converted to OPS.
+
+-------------------------
+Running SENGA+ in Archer2
+-------------------------
+
+1) Load the following modules: PrgEnv-gnu, cray-hdf5-parallel (required for visualization)
+2) Open ./src/Makefile.codegen: set COMP=cray, LOC=archer2
+3) cd ./src/
+4) Make Allmake executable:
+   cd src/
+   chmod +x Allmake
+4) Compile the code using the command:
+   ./Allmake
+5) Return to the main directory:
+   cd ..
+6) Create a symlink to src/senga2 in the main directory:
+   ln -s ./src/senga2 senga2
+7) Set the cont.dat in input folder as per your requirement (Information regarding this can be found in ./src/docs/s2user.pdf)
+8) Run the senga2 executable from the current directory (typically through the runcase job script, adapted to the HPC machine that you wish to use)
+
+
+
+-------------------------
+Running SENGA+ in Rocket
+-------------------------
+
+0) Purge all loaded modules with `module purge`
+1) Load the following modules: 
+`module load OpenMPI/1.10.3-GCC-6.1.0-2.27`
+`module load gnuplot/5.0.6-goolf-2017a`
+`module load HDF5/1.8.18-goolf-2017a`
+`module load OpenBLAS/0.2.20-GCC-6.4.0-2.28`
+`module load FFTW/3.3.6-goolf-2017a`
+2) Open ./src/Makefile.codegen: set COMP=gnu (or COMP=h5 to use HDF5 I/O), LOC=rocket
+3) cd ./src/
+4) Make Allmake executable:
+   cd src/
+   chmod +x Allmake
+4) Compile the code using the command:
+   ./Allmake
+5) Return to the main directory:
+   cd ..
+6) Create a symlink to src/senga2 in the main directory:
+   ln -s ./src/senga2 senga2
+7) Set the cont.dat in input folder as per your requirement (Information regarding this can be found in ./src/docs/s2user.pdf)
+8) Run the senga2 executable from the current directory (typically through the runcase job script, adapted to the HPC machine that you wish to use)

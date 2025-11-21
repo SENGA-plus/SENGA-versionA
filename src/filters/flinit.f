@@ -1,0 +1,278 @@
+      SUBROUTINE FLINIT
+ 
+C     *************************************************************************
+C
+C     FLINIT
+C     ======
+C
+C     AUTHOR
+C     ------
+C     R.S.CANT  --  CAMBRIDGE UNIVERSITY ENGINEERING DEPARTMENT
+C
+C     CHANGE RECORD
+C     -------------
+C     30-AUG-2009:  CREATED
+C
+C     DESCRIPTION
+C     -----------
+C     DNS CODE SENGA2
+C     INITIALISES SPATIAL FILTERING
+C     12TH ORDER EXPLICIT FILTERING
+C     6TH,7TH,8TH,9TH,10TH,11TH ORDER EXPLICIT BOUNDARY SCHEMES
+
+C     *************************************************************************
+
+
+C     GLOBAL DATA
+C     ===========
+C     -------------------------------------------------------------------------
+      INCLUDE 'com_senga2.h'
+C     -------------------------------------------------------------------------
+
+
+C     BEGIN
+C     =====
+      
+C     =========================================================================
+
+C     INTERIOR SCHEME
+C     ---------------
+
+C     TWELFTH ORDER EXPLICIT CENTRED DIFFERENCES
+      TWFACT = -EXP(-1.2D1*LOG(TWO))
+      FACOFX = -1.00D0*TWFACT
+      FBCOFX =  1.20D1*TWFACT
+      FCCOFX = -6.60D1*TWFACT
+      FDCOFX =  2.20D2*TWFACT
+      FECOFX = -4.95D2*TWFACT
+      FECOFX =  7.92D2*TWFACT
+      FGCOFX = -9.24D2*TWFACT
+      FGCOFX =  1.00D0 + FGCOFX
+
+      FACOFY = FACOFX
+      FBCOFY = FBCOFX
+      FCCOFY = FCCOFX
+      FDCOFY = FDCOFX
+      FECOFY = FECOFX
+      FFCOFY = FFCOFX
+      FGCOFY = FGCOFX
+
+      FACOFZ = FACOFX
+      FBCOFZ = FBCOFX
+      FCCOFZ = FCCOFX
+      FDCOFZ = FDCOFX
+      FECOFZ = FECOFX
+      FFCOFZ = FFCOFX
+      FGCOFZ = FGCOFX
+
+
+C     BOUNDARY TREATMENT
+C     ------------------
+
+C     FIRST POINT SCHEME (6TH ORDER ONE SIDED)
+      FACF1X = -1.00D0*TWFACT
+      FBCF1X =  6.00D0*TWFACT
+      FCCF1X = -1.50D1*TWFACT
+      FDCF1X =  2.00D1*TWFACT
+      FECF1X = -1.50D1*TWFACT
+      FFCF1X =  6.00D0*TWFACT
+      FGCF1X = -1.00D0*TWFACT
+      FACF1X =  1.00D0 + FACF1X
+
+      FACF1Y = FACF1X
+      FBCF1Y = FBCF1X
+      FCCF1Y = FCCF1X
+      FDCF1Y = FDCF1X
+      FECF1Y = FECF1X
+      FFCF1Y = FFCF1X
+      FGCF1Y = FGCF1X
+
+      FACF1Z = FACF1X
+      FBCF1Z = FBCF1X
+      FCCF1Z = FCCF1X
+      FDCF1Z = FDCF1X
+      FECF1Z = FECF1X
+      FFCF1Z = FFCF1X
+      FGCF1Z = FGCF1X
+
+C     SECOND POINT SCHEME (7TH ORDER MIXED) 
+      FACF2X =  6.00D0*TWFACT
+      FBCF2X = -3.70D1*TWFACT
+      FCCF2X =  9.60D1*TWFACT
+      FDCF2X = -1.35D2*TWFACT
+      FECF2X =  1.10D2*TWFACT
+      FFCF2X = -5.10D1*TWFACT
+      FGCF2X =  1.20D1*TWFACT
+      FHCF2X = -1.00D0*TWFACT
+      FBCF2X =  1.00D0 + FBCF2X
+
+      FACF2Y = FACF2X
+      FBCF2Y = FBCF2X
+      FCCF2Y = FCCF2X
+      FDCF2Y = FDCF2X
+      FECF2Y = FECF2X
+      FFCF2Y = FFCF2X
+      FGCF2Y = FGCF2X
+      FHCF2Y = FHCF2X
+
+      FACF2Z = FACF2X
+      FBCF2Z = FBCF2X
+      FCCF2Z = FCCF2X
+      FDCF2Z = FDCF2X
+      FECF2Z = FECF2X
+      FFCF2Z = FFCF2X
+      FGCF2Z = FGCF2X
+      FHCF2Z = FHCF2X
+
+
+C     THIRD POINT SCHEME  (8TH ORDER MIXED)
+      FACF3X = -1.50D1*TWFACT
+      FBCF3X =  9.60D1*TWFACT
+      FCCF3X = -2.62D2*TWFACT
+      FDCF3X =  3.96D2*TWFACT
+      FECF3X = -3.60D2*TWFACT
+      FFCF3X =  2.00D2*TWFACT
+      FGCF3X = -6.60D1*TWFACT
+      FHCF3X =  1.20D1*TWFACT
+      FICF3X = -1.00D0*TWFACT
+      FCCF3X =  1.00D0 + FCCF3X
+
+      FACF3Y = FACF3X
+      FBCF3Y = FBCF3X
+      FCCF3Y = FCCF3X
+      FDCF3Y = FDCF3X
+      FECF3Y = FECF3X
+      FFCF3Y = FFCF3X
+      FGCF3Y = FGCF3X
+      FHCF3Y = FHCF3X
+      FICF3Y = FICF3X
+
+      FACF3Z = FACF3X
+      FBCF3Z = FBCF3X
+      FCCF3Z = FCCF3X
+      FDCF3Z = FDCF3X
+      FECF3Z = FECF3X
+      FFCF3Z = FFCF3X
+      FGCF3Z = FGCF3X
+      FHCF3Z = FHCF3X
+      FICF3Z = FICF3X
+        
+C     FOURTH POINT SCHEME (9TH ORDER MIXED)
+      FACF4X =  2.00D1*TWFACT
+      FBCF4X = -1.35D2*TWFACT
+      FCCF4X =  3.96D2*TWFACT
+      FDCF4X = -6.62D2*TWFACT
+      FECF4X =  6.96D2*TWFACT
+      FFCF4X = -4.80D2*TWFACT
+      FGCF4X =  2.20D2*TWFACT
+      FHCF4X = -6.60D1*TWFACT
+      FICF4X =  1.20D1*TWFACT
+      FJCF4X = -1.00D0*TWFACT
+      FDCF4X =  1.00D0 + FDCF4X
+
+      FACF4Y = FACF4X
+      FBCF4Y = FBCF4X
+      FCCF4Y = FCCF4X
+      FDCF4Y = FDCF4X
+      FECF4Y = FECF4X
+      FFCF4Y = FFCF4X
+      FGCF4Y = FGCF4X
+      FHCF4Y = FHCF4X
+      FICF4Y = FICF4X
+      FJCF4Y = FJCF4X
+
+      FACF4Z = FACF4X
+      FBCF4Z = FBCF4X
+      FCCF4Z = FCCF4X
+      FDCF4Z = FDCF4X
+      FECF4Z = FECF4X
+      FFCF4Z = FFCF4X
+      FGCF4Z = FGCF4X
+      FHCF4Z = FHCF4X
+      FICF4Z = FICF4X
+      FJCF4Z = FJCF4X
+
+C     FIFTH POINT SCHEME  (10TH ORDER MIXED)
+      FACF5X = -1.50D1*TWFACT
+      FBCF5X =  1.10D2*TWFACT
+      FCCF5X = -3.60D2*TWFACT
+      FDCF5X =  6.96D2*TWFACT
+      FECF5X = -8.87D2*TWFACT
+      FFCF5X =  7.86D2*TWFACT
+      FGCF5X = -4.95D2*TWFACT
+      FHCF5X =  2.20D2*TWFACT
+      FICF5X = -6.60D1*TWFACT
+      FJCF5X =  1.20D1*TWFACT
+      FKCF5X = -1.00D0*TWFACT
+      FECF5X =  1.00D0 + FECF5X
+
+      FACF5Y = FACF5X
+      FBCF5Y = FBCF5X
+      FCCF5Y = FCCF5X
+      FDCF5Y = FDCF5X
+      FECF5Y = FECF5X
+      FFCF5Y = FFCF5X
+      FGCF5Y = FGCF5X
+      FHCF5Y = FHCF5X
+      FICF5Y = FICF5X
+      FJCF5Y = FJCF5X
+      FKCF5Y = FKCF5X
+
+      FACF5Z = FACF5X
+      FBCF5Z = FBCF5X
+      FCCF5Z = FCCF5X
+      FDCF5Z = FDCF5X
+      FECF5Z = FECF5X
+      FFCF5Z = FFCF5X
+      FGCF5Z = FGCF5X
+      FHCF5Z = FHCF5X
+      FICF5Z = FICF5X
+      FJCF5Z = FJCF5X
+      FKCF5Z = FKCF5X
+
+C     SIXTH POINT SCHEME  (11TH ORDER MIXED)
+      FACF6X =  6.00D0*TWFACT
+      FBCF6X = -5.10D1*TWFACT
+      FCCF6X =  2.00D2*TWFACT
+      FDCF6X = -4.80D2*TWFACT
+      FECF6X =  7.86D2*TWFACT
+      FFCF6X = -9.23D2*TWFACT
+      FGCF6X =  7.92D2*TWFACT
+      FHCF6X = -4.95D2*TWFACT
+      FICF6X =  2.20D2*TWFACT
+      FJCF6X = -6.60D1*TWFACT
+      FKCF6X =  1.20D1*TWFACT
+      FLCF6X = -1.00D0*TWFACT
+      FFCF6X =  1.00D0 + FFCF6X
+
+      FACF6Y = FACF6X
+      FBCF6Y = FBCF6X
+      FCCF6Y = FCCF6X
+      FDCF6Y = FDCF6X
+      FECF6Y = FECF6X
+      FFCF6Y = FFCF6X
+      FGCF6Y = FGCF6X
+      FHCF6Y = FHCF6X
+      FICF6Y = FICF6X
+      FJCF6Y = FJCF6X
+      FKCF6Y = FKCF6X
+      FLCF6Y = FLCF6X
+
+      FACF6Z = FACF6X
+      FBCF6Z = FBCF6X
+      FCCF6Z = FCCF6X
+      FDCF6Z = FDCF6X
+      FECF6Z = FECF6X
+      FFCF6Z = FFCF6X
+      FGCF6Z = FGCF6X
+      FHCF6Z = FHCF6X
+      FICF6Z = FICF6X
+      FJCF6Z = FJCF6X
+      FKCF6Z = FKCF6X
+      FLCF6Z = FLCF6X
+
+C     =========================================================================
+
+
+      RETURN
+      END

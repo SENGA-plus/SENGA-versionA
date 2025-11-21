@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+#
+#
+#
+rm rept.res
+rm stat.res
+#
+rm pres*.res
+rm uvel*.res
+rm temp*.res
+rm dens*.res
+rm ener*.res
+rm yf*.res
+#
+mpirun -c $1 senga2
+#
+exit

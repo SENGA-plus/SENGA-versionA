@@ -1,0 +1,121 @@
+      SUBROUTINE FFTP1D(CARRAY,NX)
+
+C     *************************************************************************
+C
+C     FFTP1D
+C     ======
+C
+C     AUTHOR
+C     ------
+C     R.S.CANT  --  CAMBRIDGE UNIVERSITY ENGINEERING DEPARTMENT
+C
+C     CHANGE RECORD
+C     -------------
+C     14-SEP-1998:  CREATED
+C
+C     DESCRIPTION
+C     -----------
+C     CARRIES OUT AN FFT IN 1D
+C     ARBITRARY DOMAIN SIZE
+C     USES THE BLUESTEIN CONVOLUTION FORMULA
+C     USES PREDEFINED H-FUNCTION AND W-FACTORS
+C
+C     REFERENCES
+C     ----------
+C     1) BRIGHAM,EO: "THE FAST FOURIER TRANSFORM" PRENTICE-HALL 1974
+C
+C     *************************************************************************
+
+C     GLOBAL DATA
+C     FBTCOM-------------------------------------------------------------------
+
+      INTEGER NFTMAX
+      PARAMETER(NFTMAX=2048)
+
+      DOUBLE PRECISION WPFACT(-NFTMAX:NFTMAX)
+
+      DOUBLE PRECISION DATFFT(2*NFTMAX)
+      DOUBLE PRECISION HFUNCT(2*NFTMAX)
+
+      DOUBLE PRECISION FFFACT
+      INTEGER NXFFT,NXFDBL
+
+      COMMON/FBTCOM/DATFFT,WPFACT,HFUNCT,FFFACT,NXFFT,NXFDBL
+
+C     FBTCOM-------------------------------------------------------------------
+
+
+C     PARAMETERS
+C     ==========
+      DOUBLE PRECISION ZERO,ONE
+      PARAMETER(ZERO=0.0D0, ONE=1.0D0)
+      INTEGER IPOS,INEG
+      PARAMETER(IPOS=1, INEG=-1)
+
+
+C     ARGUMENTS
+C     =========
+      INTEGER NX
+      DOUBLE PRECISION CARRAY(2*NX)
+
+
+C     LOCAL DATA
+C     ==========
+      DOUBLE PRECISION DATEMP
+      INTEGER IC,IRE,IIM
+      INTEGER NXDBLE
+
+
+C     BEGIN
+C     =====
+
+C     PRELIMINARIES
+C     -------------
+
+C     USEFUL FACTOR
+      NXDBLE = NX*2
+
+
+C     DO THE CONVOLUTION
+C     ------------------
+
+C     MULTIPLY INPUT DATA
+      DO IC = 1,NXFDBL
+        DATFFT(IC) = ZERO
+      ENDDO
+      DO IC = 1,NX
+        IIM = 2*IC
+        IRE = IIM-1
+        DATFFT(IRE) = CARRAY(IRE)*WPFACT(IRE)-CARRAY(IIM)*WPFACT(IIM)
+        DATFFT(IIM) = CARRAY(IIM)*WPFACT(IRE)+CARRAY(IRE)*WPFACT(IIM)
+      ENDDO
+
+C     FFT THE INPUT DATA
+      CALL FFTF1D(DATFFT,NXFFT,IPOS)
+   
+C     MULTIPLY FFTS
+      DO IC = 1,NXFFT
+        IIM = 2*IC
+        IRE = IIM-1
+        DATEMP      = DATFFT(IRE)*HFUNCT(IRE)-DATFFT(IIM)*HFUNCT(IIM)
+        DATFFT(IIM) = DATFFT(IIM)*HFUNCT(IRE)+DATFFT(IRE)*HFUNCT(IIM)
+        DATFFT(IRE) = DATEMP
+      ENDDO
+
+C     INVERSE FFT
+      CALL FFTF1D(DATFFT,NXFFT,INEG)
+      DO IC = 1,NXDBLE
+        DATFFT(IC) = DATFFT(IC)*FFFACT
+      ENDDO
+
+C     FINAL MULTIPLICATION
+      DO IC = 1,NX
+        IIM = 2*IC
+        IRE = IIM-1
+        CARRAY(IRE) = DATFFT(IRE)*WPFACT(IRE)-DATFFT(IIM)*WPFACT(IIM)
+        CARRAY(IIM) = DATFFT(IIM)*WPFACT(IRE)+DATFFT(IRE)*WPFACT(IIM)
+      ENDDO
+
+
+      RETURN
+      END

@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+#  Makes a library of the FFT routines
+#
+#
+mpif90 -O3 -Wall -c fftgen.f
+mpif90 -O3 -Wall -c fftgin.f
+#
+mpif90 -O3 -Wall -c fftfr2.f
+mpif90 -O3 -Wall -c fftfr3.f
+mpif90 -O3 -Wall -c fftfr5.f
+mpif90 -O3 -Wall -c fftfr7.f
+mpif90 -O3 -Wall -c fftfra.f
+#
+mpif90 -O3 -Wall -c fftnr2.f
+mpif90 -O3 -Wall -c fftnr3.f
+mpif90 -O3 -Wall -c fftnr5.f
+mpif90 -O3 -Wall -c fftnr7.f
+mpif90 -O3 -Wall -c fftnra.f
+#
+mpif90 -O3 -Wall -c fftp1d.f
+mpif90 -O3 -Wall -c fftpin.f
+mpif90 -O3 -Wall -c fftf1d.f
+#
+ar rcsv fftlib.a \
+        fftgen.o fftgin.o \
+        fftfr2.o fftfr3.o fftfr5.o fftfr7.o fftfra.o \
+        fftnr2.o fftnr3.o fftnr5.o fftnr7.o fftnra.o \
+        fftp1d.o fftpin.o fftf1d.o
+#
+rm *.o
+#
+exit

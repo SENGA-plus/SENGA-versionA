@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+#
+#
+#
+cd parlib
+./Makepar
+cd ..
+#
+cd fftlib
+./Makeftl
+cd ..
+#
+cd rndlib
+./Makeran
+cd ..
+#
+rm senga2
+make
+#
+exit

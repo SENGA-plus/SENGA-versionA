@@ -1,0 +1,5 @@
+specfiles/lietal04_H2_21.spc
+thermofiles/lietal04_H2_21.thr
+diffdata/diffusion.dat
+diffdata/collision.dat
+lietal04_H2_21.dif

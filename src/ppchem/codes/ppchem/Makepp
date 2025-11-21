@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+#
+#
+#
+#g77 -O -fno-silent -Wimplicit -Wall -o ppchem ppchem.f \
+mpif90 -O3 -Wall -o ppchem ppchem.f \
+fcheck.f inlist.f ppmech.f ppmspc.f ppmbdy.f ppmmec.f ppmrcf.f ppspec.f \
+listem.f output.f parser.f parmec.f erhand.f chkstr.f -lm
+#
+exit

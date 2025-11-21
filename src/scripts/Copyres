@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+#
+#
+#
+cp rept.res $1
+cp stat.res $1
+cp reso*.res $1
+#
+cp dens*.res $1
+cp uvel*.res $1
+cp ener*.res $1
+cp pres*.res $1
+cp temp*.res $1
+cp yf*.res $1
+#
+cp senga2.res $1
+#
+cp fort.3 $1
+#
+cp com_senga2.h $1
+#
+cp cont.dat $1
+cp chem.dat $1
+#
+cp dmpi0000000.dat $1
+cp dmpi0000001.dat $1
+#
+exit

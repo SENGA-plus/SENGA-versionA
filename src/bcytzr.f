@@ -1,0 +1,70 @@
+      SUBROUTINE BCYTZR
+ 
+C     *************************************************************************
+C
+C     BCYTZR
+C     ======
+C
+C     AUTHOR
+C     ------
+C     R.S.CANT  --  CAMBRIDGE UNIVERSITY ENGINEERING DEPARTMENT
+C
+C     CHANGE RECORD
+C     -------------
+C     26-OCT-2013:  CREATED
+C
+C     DESCRIPTION
+C     -----------
+C     DNS CODE SENGA2
+C     EVALUATES TIME-DEPENDENT BOUNDARY CONDITIONS FOR MASS FRACTIONS
+C     AND THEIR TIME DERIVATIVES
+C
+C     Z-DIRECTION RIGHT-HAND END
+C
+C     *************************************************************************
+
+
+C     GLOBAL DATA
+C     ===========
+C     -------------------------------------------------------------------------
+      INCLUDE 'com_senga2.h'
+C     -------------------------------------------------------------------------
+
+
+C     LOCAL DATA
+C     ==========
+      INTEGER IC,JC
+      INTEGER ISPEC
+
+
+C     BEGIN
+C     =====
+
+C     =========================================================================
+
+C     RK TIME INCREMENT IS HELD IN RKTIM(IRKSTP)
+
+C     =========================================================================
+
+C     EVALUATE AND RETURN STRYZR,DYDTZR
+      DO ISPEC = 1,NSPEC
+
+        DO JC = JSTAL,JSTOL
+          DO IC = ISTAL,ISTOL
+
+C           SET MASS FRACTIONS TO CONSTANT (INITIAL) VALUES
+            STRYZR(IC,JC,ISPEC) = YRIN(ISPEC)
+
+C           SET MASS FRACTION TIME DERIVATIVES TO ZERO
+            DYDTZR(IC,JC,ISPEC) = ZERO
+
+          ENDDO
+        ENDDO
+
+      ENDDO
+
+C     =========================================================================
+
+
+      RETURN
+      END

@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+#
+#
+#
+tar zcvf senga2v2.1.tar *.f *.h cont.dat chem.dat diff.dat radn.dat \
+Makefil* Tarsenga2 Allmake Senga2 \
+fftlib rndlib parlib mpi_stub \
+flamin_options differentiators filters casefiles scripts gnufiles docs \
+ppchem ppdiff \
+README
+#
+exit

@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+#  Makes a library of the random number generator routines
+#
+#  g77 compiler on Redhat 9.0
+#
+mpif90 -O3 -Wall -c ranini.f
+mpif90 -O3 -Wall -c ranuni.f
+#
+ar rcsv rndlib.a ranini.o ranuni.o
+#
+rm *.o
+#
+exit

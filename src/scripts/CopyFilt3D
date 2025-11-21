@@ -1,0 +1,7 @@
+#!/bin/sh
+#
+cp filters/filtrx.f filtrx.f
+cp filters/filtry.f filtry.f
+cp filters/filtrz.f filtrz.f
+#
+exit
