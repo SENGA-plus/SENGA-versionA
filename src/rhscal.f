@@ -18,7 +18,13 @@ C     17-APR-2013:  RSC MIXTURE AVERAGED TRANSPORT
 C     14-JUL-2013:  RSC RADIATION HEAT LOSS
 C     08-JUN-2015:  RSC REMOVE Nth SPECIES TREATMENT
 C     08-JUN-2015:  RSC UPDATED WALL BCS
-C     01-DEC-2022:  VM CONSERVATIVE-PRIMITIVE FIX/SORET FIX
+C     01-APR-2022:  RSC REFITTED TRANSPORT COEFFICIENTS
+C     18-SEP-2022:  RSC BC TRANSVERSE TERMS
+C     19-MAY-2023:  RSC BUG FIX GRADIENTS OF LN(TEMPERATURE)
+C     26-MAY-2023:  RSC BUG FIX THERMAL DIFFUSION RATIO
+C     13-JUN-2023:  RSC/PJB BUG FIX J-INDEX
+C     13-JUN-2023:  RSC/PJB BUG FIX J-INDEX
+C     22-MAR-2026:  RSC BUG FIX THERMAL DIFFUSION RATIO
 C     
 C     DESCRIPTION
 C     -----------
@@ -41,11 +47,10 @@ C     -------------------------------------------------------------------------
 C     LOCAL DATA
 C     ==========
       DOUBLE PRECISION CTRANS(NSPCMX)
-      DOUBLE PRECISION FORNOW,COMBO1,COMBO2,COMBO3
-      DOUBLE PRECISION FORNOW0,FORNOW1,FORNOW2,FORNOW3,FORNOW4
-      INTEGER IC,JC,KC,ISPEC
+      DOUBLE PRECISION FORNOW
+      DOUBLE PRECISION TRATIO,COMBO1,COMBO2
+      INTEGER IC,JC,KC,ISPEC,JSPEC
       INTEGER ITINT,ICP,IINDEX,IPOWER,ICOEF1,ICOEF2
-      LOGICAL FLMTDS
 
 
 C     BEGIN
@@ -59,7 +64,7 @@ C     EVALUATE THE TEMPERATURE
 C     ------------------------
 C     ALSO PRESSURE, MIXTURE CP AND MIXTURE GAS CONSTANT
       CALL TEMPER
-C                                                               PRUN,TRUN = P,T
+C                                                               TRANSP = MIX CP
 C                                                           STORE7 = RHO*MIX RG
 C     =========================================================================
 
@@ -131,6 +136,7 @@ C     Z-DIRECTION
           ENDDO
         ENDDO
       ENDIF
+C                                                               TRANSP = MIX CP
 C                                                              ALL STORES CLEAR
 C     =========================================================================
 
@@ -153,78 +159,7 @@ C     URHS,VRHS,WRHS CONTAIN RHO U, RHO V, RHO W
           ENDDO
         ENDDO
       ENDDO
-
-C    TRANSVERSE TERMS FOR BOUNDARIES (IMPLEMENTED BY NC)
-C     X-DIRECTION
-      IF(FXLCNV)THEN
-      DO KC = KSTAL,KSTOL
-        DO JC = JSTAL,JSTOL
-
-            T1BXL(JC,KC) = -(STORE2(ISTAL,JC,KC)
-     +                     + STORE3(ISTAL,JC,KC))
-
-       ENDDO
-      ENDDO
-      END IF
-
-      IF(FXRCNV)THEN
-      DO KC = KSTAL,KSTOL
-        DO JC = JSTAL,JSTOL
-
-            T1BXR(JC,KC) = -(STORE2(ISTOL,JC,KC)
-     +                     + STORE3(ISTOL,JC,KC))
-
-       ENDDO
-      ENDDO
-      END IF
-
-C     Y-DIRECTION
-      IF(FYLCNV)THEN
-      DO KC = KSTAL,KSTOL
-        DO IC= ISTAL,ISTOL
-
-            T1BYL(IC,KC) = -(STORE1(IC,JSTAL,KC)
-     +                     + STORE3(IC,JSTAL,KC))
-
-       ENDDO
-      ENDDO
-      END IF
-
-      IF(FYRCNV)THEN
-      DO KC = KSTAL,KSTOL
-        DO IC= ISTAL,ISTOL
-
-            T1BYR(IC,KC) = -(STORE1(IC,JSTOL,KC)
-     +                     + STORE3(IC,JSTOL,KC))
-
-       ENDDO
-      ENDDO
-      END IF
-
-C     Z-DIRECTION
-      IF(FZLCNV)THEN
-      DO JC = JSTAL,JSTOL
-        DO IC= ISTAL,ISTOL
-
-            T1BZL(IC,JC) = -(STORE1(IC,JC,KSTAL)
-     +                     + STORE2(IC,JC,KSTAL))
-
-       ENDDO
-      ENDDO
-      END IF
-
-      IF(FZRCNV)THEN
-      DO JC = JSTAL,JSTOL
-        DO IC= ISTAL,ISTOL
-
-            T1BZR(IC,JC) = -(STORE1(IC,JC,KSTOL)
-     +                     + STORE2(IC,JC,KSTOL))
-
-       ENDDO
-      ENDDO
-      END IF
-
-C=========================REFER TO EQ. 3.74 OF LODATO'S THESIS=================
+C                                                               TRANSP = MIX CP
 C                                                              ALL STORES CLEAR
 C     =========================================================================
 C     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -247,6 +182,7 @@ C     E IS PARALLEL
           ENDDO
         ENDDO
       ENDDO
+C                                                               TRANSP = MIX CP
 C                                                              ALL STORES CLEAR
 C     =========================================================================
 
@@ -312,6 +248,7 @@ C     Z-DIRECTION
           ENDDO
         ENDDO
       ENDIF
+C                                                               TRANSP = MIX CP
 C                                                              ALL STORES CLEAR
 C     =========================================================================
 
@@ -329,6 +266,7 @@ C     COLLECT E DIV RHO U IN STORE4 FOR NOW
           ENDDO
         ENDDO
       ENDDO
+C                                                               TRANSP = MIX CP
 C                                                          STORE4 = E DIV RHO U
 C     =========================================================================
 
@@ -389,6 +327,7 @@ C     COLLECT DIV RHO U E IN STORE4 FOR NOW
           ENDDO
         ENDDO
       ENDDO
+C                                                               TRANSP = MIX CP
 C                                            STORE4 = E DIV RHO U + DIV RHO U E
 C     =========================================================================
 
@@ -417,6 +356,7 @@ C     COLLECT ALL CONVECTIVE TERMS IN ERHS
 C     -------------------------------------
 C     E EQUATION: CONVECTIVE TERMS COMPLETE
 C     -------------------------------------
+C                                                               TRANSP = MIX CP
 C                                                              ALL STORES CLEAR
 C     =========================================================================
 
@@ -427,7 +367,7 @@ C     TEMPERATURE GRADIENTS
       CALL DFBYDX(TRUN,STORE1)
       CALL DFBYDY(TRUN,STORE2)
       CALL DFBYDZ(TRUN,STORE3)
-
+C                                                               TRANSP = MIX CP
 C                                                         STORE1,2,3 = DTDX,Y,Z
 C     =========================================================================
 
@@ -440,7 +380,9 @@ C     X-DIRECTION
           DO JC = JSTAL,JSTOL
 
             STRTXL(JC,KC) = TRUN(ISTAL,JC,KC)
-            BCLTXL(JC,KC) = STORE1(ISTAL,JC,KC)
+            BCTXXL(JC,KC) = STORE1(ISTAL,JC,KC)
+            BCTYXL(JC,KC) = STORE2(ISTAL,JC,KC)
+            BCTZXL(JC,KC) = STORE3(ISTAL,JC,KC)
 
           ENDDO
         ENDDO
@@ -450,7 +392,9 @@ C     X-DIRECTION
           DO JC = JSTAL,JSTOL
 
             STRTXR(JC,KC) = TRUN(ISTOL,JC,KC)
-            BCLTXR(JC,KC) = STORE1(ISTOL,JC,KC)
+            BCTXXR(JC,KC) = STORE1(ISTOL,JC,KC)
+            BCTYXR(JC,KC) = STORE2(ISTOL,JC,KC)
+            BCTZXR(JC,KC) = STORE3(ISTOL,JC,KC)
 
           ENDDO
         ENDDO
@@ -462,7 +406,9 @@ C     Y-DIRECTION
           DO IC = ISTAL,ISTOL
 
             STRTYL(IC,KC) = TRUN(IC,JSTAL,KC)
-            BCLTYL(IC,KC) = STORE2(IC,JSTAL,KC)
+            BCTXYL(IC,KC) = STORE1(IC,JSTAL,KC)
+            BCTYYL(IC,KC) = STORE2(IC,JSTAL,KC)
+            BCTZYL(IC,KC) = STORE3(IC,JSTAL,KC)
 
           ENDDO
         ENDDO
@@ -472,7 +418,9 @@ C     Y-DIRECTION
           DO IC = ISTAL,ISTOL
 
             STRTYR(IC,KC) = TRUN(IC,JSTOL,KC)
-            BCLTYR(IC,KC) = STORE2(IC,JSTOL,KC)
+            BCTXYR(IC,KC) = STORE1(IC,JSTOL,KC)
+            BCTYYR(IC,KC) = STORE2(IC,JSTOL,KC)
+            BCTZYR(IC,KC) = STORE3(IC,JSTOL,KC)
 
           ENDDO
         ENDDO
@@ -484,7 +432,9 @@ C     Z-DIRECTION
           DO IC = ISTAL,ISTOL
 
             STRTZL(IC,JC) = TRUN(IC,JC,KSTAL)
-            BCLTZL(IC,JC) = STORE3(IC,JC,KSTAL)
+            BCTXZL(IC,JC) = STORE1(IC,JC,KSTAL)
+            BCTYZL(IC,JC) = STORE2(IC,JC,KSTAL)
+            BCTZZL(IC,JC) = STORE3(IC,JC,KSTAL)
 
           ENDDO
         ENDDO
@@ -494,11 +444,14 @@ C     Z-DIRECTION
           DO IC = ISTAL,ISTOL
 
             STRTZR(IC,JC) = TRUN(IC,JC,KSTOL)
-            BCLTZR(IC,JC) = STORE3(IC,JC,KSTOL)
+            BCTXZR(IC,JC) = STORE1(IC,JC,KSTOL)
+            BCTYZR(IC,JC) = STORE2(IC,JC,KSTOL)
+            BCTZZR(IC,JC) = STORE3(IC,JC,KSTOL)
 
           ENDDO
         ENDDO
       ENDIF
+C                                                               TRANSP = MIX CP
 C                                                         STORE1,2,3 = DTDX,Y,Z
 C     =========================================================================
 
@@ -506,69 +459,95 @@ C     E-EQUATION: HEAT FLUX TERMS
 C     ---------------------------
 
 C     THERMAL CONDUCTIVITY
-C     ANALYTICAL FUNCTION OF TEMPERATURE
-C     TRANSP CONTAINS MIXTURE CP
-C     STORE CONDUCTIVITY/CP IN TRANSP FOR USE IN DIFFUSIVITY AND VISCOSITY
-C     STORE CONDUCTIVITY IN STORE7 FOR NOW
-
-C     THERMAL CONDUCTIVITY IS PARALLEL
-      DO KC = KSTAB,KSTOB
-        DO JC = JSTAB,JSTOB
-          DO IC = ISTAB,ISTOB
-
-            FORNOW = ALAMDA*EXP(RLAMDA*LOG(TRUN(IC,JC,KC)))
-            STORE7(IC,JC,KC) = FORNOW*TRANSP(IC,JC,KC)
-            TRANSP(IC,JC,KC) = FORNOW
-
-          ENDDO
-        ENDDO
-      ENDDO
+C     --------------------
 
 C     MIXTURE AVERAGED TRANSPORT
 C     RSC 17-APR-2013
-C     THERMAL CONDUCTIVITY
-
+C     RSC 01-APR-2022
       IF(FLMAVT)THEN
 
+C       -----------------------------------------------------------------------
+
+C       MIXTURE AVERAGED TRANSPORT
+
+C       MIXTURE MOLAR MASS AND SPECIES MOLE FRACTIONS ARE PARALLEL
+        DO KC = KSTAB,KSTOB
+          DO JC = JSTAB,JSTOB
+            DO IC = ISTAB,ISTOB
+
+              COMBO1 = ZERO
+              DO ISPEC = 1, NSPEC
+                CTRANS(ISPEC) = YRHS(IC,JC,KC,ISPEC)*OVWMOL(ISPEC)
+                COMBO1 = COMBO1 + CTRANS(ISPEC)
+              ENDDO
+              COMBO1 = ONE/COMBO1
+              WMOMIX(IC,JC,KC) = DRHS(IC,JC,KC)*COMBO1
+
+              DO ISPEC = 1, NSPEC
+                XMOLFR(ISPEC,IC,JC,KC) = CTRANS(ISPEC)*COMBO1
+              ENDDO
+
+            ENDDO
+          ENDDO
+        ENDDO
+
+C       -----------------------------------------------------------------------
+
+C       THERMAL CONDUCTIVITY IS PARALLEL
+C       STORE CONDUCTIVITY IN STORE7 FOR NOW
         DO KC = KSTAB,KSTOB
           DO JC = JSTAB,JSTOB
             DO IC = ISTAB,ISTOB
 
 C             CONDUCTIVITY FOR EACH SPECIES
-              TRANSP(IC,JC,KC) = LOG(TRUN(IC,JC,KC)/TDIFGB)
+              TRATIO = TRUN(IC,JC,KC)*TDIFGB
               DO ISPEC = 1, NSPEC
                 FORNOW = CONDCO(NCOCON,ISPEC)
                 DO ICP = NCOCM1,1,-1
-                  FORNOW = FORNOW*TRANSP(IC,JC,KC) + CONDCO(ICP,ISPEC)
+                  FORNOW = FORNOW*TRATIO + CONDCO(ICP,ISPEC)
                 ENDDO
-                CTRANS(ISPEC) = EXP(FORNOW)
+                CTRANS(ISPEC) = FORNOW
               ENDDO
 
 C             COMBINATION RULE FOR CONDUCTIVITY
+C             RSC/GVN 08-MAR-2014 BUG FIX
               COMBO1 = ZERO
               COMBO2 = ZERO
-              COMBO3 = ZERO
               DO ISPEC = 1, NSPEC
-                FORNOW = YRHS(IC,JC,KC,ISPEC)*OVWMOL(ISPEC)
+                FORNOW = XMOLFR(ISPEC,IC,JC,KC)
                 COMBO1 = COMBO1 + FORNOW*CTRANS(ISPEC)
                 COMBO2 = COMBO2 + FORNOW/CTRANS(ISPEC)
-                COMBO3 = COMBO3 + FORNOW
               ENDDO
-C             RSC/GVN 08-MAR-2014 BUG FIX
-C              COMBO3 = DRHS(IC,JC,KC)/COMBO3
-C              COMBO1 = COMBO1*COMBO3
-C              COMBO2 = COMBO2*COMBO3
-C              STORE7(IC,JC,KC) = HALF*(COMBO1 + ONE/COMBO2) 
-C              WMOMIX(IC,JC,KC) = COMBO3
-              COMBO3 = ONE/COMBO3
-              COMBO1 = COMBO1*COMBO3
-              COMBO2 = COMBO2*COMBO3
               STORE7(IC,JC,KC) = HALF*(COMBO1 + ONE/COMBO2) 
-              WMOMIX(IC,JC,KC) = DRHS(IC,JC,KC)*COMBO3
 
             ENDDO
           ENDDO
         ENDDO
+
+C       -----------------------------------------------------------------------
+
+      ELSE
+
+C       -----------------------------------------------------------------------
+
+C       CONSTANT LEWIS NUMBER TRANSPORT
+
+C       THERMAL CONDUCTIVITY IS PARALLEL
+C       STORE CONDUCTIVITY IN STORE7 FOR NOW
+C       STORE CONDUCTIVITY/CP IN TRANSP FOR USE IN DIFFUSIVITY AND VISCOSITY
+        DO KC = KSTAB,KSTOB
+          DO JC = JSTAB,JSTOB
+            DO IC = ISTAB,ISTOB
+
+              FORNOW = ALAMDA*EXP(RLAMDA*LOG(TRUN(IC,JC,KC)))
+              STORE7(IC,JC,KC) = FORNOW*TRANSP(IC,JC,KC)
+              TRANSP(IC,JC,KC) = FORNOW
+
+            ENDDO
+          ENDDO
+        ENDDO
+
+C       -----------------------------------------------------------------------
 
       ENDIF
 
@@ -600,6 +579,7 @@ C     RSC/TDD BUG FIX FZLCON
           ENDDO
         ENDDO
       ENDDO
+C                                                          TRANSP = MIX COND/CP
 C                                                         STORE1,2,3 = DTDX,Y,Z
 C                                                         STORE7 = CONDUCTIVITY
 C     =========================================================================
@@ -612,21 +592,12 @@ C     WALL BC: THERMAL CONDUCTION TERMS
           DO JC = JSTAL,JSTOL
 
             FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(ISTAL,JC,KC)*STORE1(ISTAL,JC,KC)
-              FORNOW1 = STORE7(ISTAL+1,JC,KC)*STORE1(ISTAL+1,JC,KC)
-              FORNOW2 = STORE7(ISTAL+2,JC,KC)*STORE1(ISTAL+2,JC,KC)
-              FORNOW3 = STORE7(ISTAL+3,JC,KC)*STORE1(ISTAL+3,JC,KC)
-              FORNOW4 = STORE7(ISTAL+4,JC,KC)*STORE1(ISTAL+4,JC,KC)
-              FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                 (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                 (1.0/4.0)*FORNOW4)/DELTAX
-C            DO IC = ISTAP1,ISTOW
-C
-C              FORNOW = FORNOW
-C     +            + ACBCXL(IC-1)*STORE7(IC,JC,KC)*STORE1(IC,JC,KC)
-C
-C            ENDDO
+            DO IC = ISTAP1,ISTOW
+
+              FORNOW = FORNOW
+     +            + ACBCXL(IC-1)*STORE7(IC,JC,KC)*STORE1(IC,JC,KC)
+
+            ENDDO
             ERHS(ISTAL,JC,KC) = ERHS(ISTAL,JC,KC) + FORNOW
   
           ENDDO
@@ -637,21 +608,12 @@ C            ENDDO
           DO JC = JSTAL,JSTOL
 
             FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(ISTOL,JC,KC)*STORE1(ISTOL,JC,KC)
-              FORNOW1 = STORE7(ISTOL-1,JC,KC)*STORE1(ISTOL-1,JC,KC)
-              FORNOW2 = STORE7(ISTOL-2,JC,KC)*STORE1(ISTOL-2,JC,KC)
-              FORNOW3 = STORE7(ISTOL-3,JC,KC)*STORE1(ISTOL-3,JC,KC)
-              FORNOW4 = STORE7(ISTOL-4,JC,KC)*STORE1(ISTOL-4,JC,KC)
-              FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                 (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                 (1.0/4.0)*FORNOW4)/DELTAX
-C            DO IC = ISTAW,ISTOM1
-C
-C              FORNOW = FORNOW
-C     +            + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*STORE1(IC,JC,KC)
-C
-C            ENDDO
+            DO IC = ISTAW,ISTOM1
+
+              FORNOW = FORNOW
+     +            + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*STORE1(IC,JC,KC)
+
+            ENDDO
             ERHS(ISTOL,JC,KC) = ERHS(ISTOL,JC,KC) + FORNOW
   
           ENDDO
@@ -662,21 +624,12 @@ C            ENDDO
           DO IC = ISTAL,ISTOL
 
             FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(IC,JSTAL,KC)*STORE2(IC,JSTAL,KC)
-              FORNOW1 = STORE7(IC,JSTAL+1,KC)*STORE2(IC,JSTAL+1,KC)
-              FORNOW2 = STORE7(IC,JSTAL+2,KC)*STORE2(IC,JSTAL+2,KC)
-              FORNOW3 = STORE7(IC,JSTAL+3,KC)*STORE2(IC,JSTAL+3,KC)
-              FORNOW4 = STORE7(IC,JSTAL+4,KC)*STORE2(IC,JSTAL+4,KC)
-              FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                 (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                 (1.0/4.0)*FORNOW4)/DELTAY
-C            DO JC = JSTAP1,JSTOW
-C
-C              FORNOW = FORNOW
-C     +            + ACBCYL(JC-1)*STORE7(IC,JC,KC)*STORE2(IC,JC,KC)
-C
-C            ENDDO
+            DO JC = JSTAP1,JSTOW
+
+              FORNOW = FORNOW
+     +            + ACBCYL(JC-1)*STORE7(IC,JC,KC)*STORE2(IC,JC,KC)
+
+            ENDDO
             ERHS(IC,JSTAL,KC) = ERHS(IC,JSTAL,KC) + FORNOW
   
           ENDDO
@@ -687,21 +640,12 @@ C            ENDDO
           DO IC = ISTAL,ISTOL
 
             FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(IC,JSTOL,KC)*STORE2(IC,JSTOL,KC)
-              FORNOW1 = STORE7(IC,JSTOL-1,KC)*STORE2(IC,JSTOL-1,KC)
-              FORNOW2 = STORE7(IC,JSTOL-2,KC)*STORE2(IC,JSTOL-2,KC)
-              FORNOW3 = STORE7(IC,JSTOL-3,KC)*STORE2(IC,JSTOL-3,KC)
-              FORNOW4 = STORE7(IC,JSTOL-4,KC)*STORE2(IC,JSTOL-4,KC)
-              FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                 (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                 (1.0/4.0)*FORNOW4)/DELTAY
-C            DO JC = JSTAW,JSTOM1
-C
-C              FORNOW = FORNOW
-C     +            + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*STORE2(IC,JC,KC)
-C
-C            ENDDO
+            DO JC = JSTAW,JSTOM1
+
+              FORNOW = FORNOW
+     +            + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*STORE2(IC,JC,KC)
+
+            ENDDO
             ERHS(IC,JSTOL,KC) = ERHS(IC,JSTOL,KC) + FORNOW
   
           ENDDO
@@ -712,21 +656,12 @@ C            ENDDO
           DO IC = ISTAL,ISTOL
 
             FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(IC,JC,KSTAL)*STORE3(IC,JC,KSTAL)
-              FORNOW1 = STORE7(IC,JC,KSTAL+1)*STORE3(IC,JC,KSTAL+1)
-              FORNOW2 = STORE7(IC,JC,KSTAL+2)*STORE3(IC,JC,KSTAL+2)
-              FORNOW3 = STORE7(IC,JC,KSTAL+3)*STORE3(IC,JC,KSTAL+3)
-              FORNOW4 = STORE7(IC,JC,KSTAL+4)*STORE3(IC,JC,KSTAL+4)
-              FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                 (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                 (1.0/4.0)*FORNOW4)/DELTAZ
-C            DO KC = KSTAP1,KSTOW
-C
-C              FORNOW = FORNOW
-C     +            + ACBCZL(KC-1)*STORE7(IC,JC,KC)*STORE3(IC,JC,KC)
-C
-C            ENDDO
+            DO KC = KSTAP1,KSTOW
+
+              FORNOW = FORNOW
+     +            + ACBCZL(KC-1)*STORE7(IC,JC,KC)*STORE3(IC,JC,KC)
+
+            ENDDO
             ERHS(IC,JC,KSTAL) = ERHS(IC,JC,KSTAL) + FORNOW
   
           ENDDO
@@ -737,27 +672,19 @@ C            ENDDO
           DO IC = ISTAL,ISTOL
 
             FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(IC,JC,KSTOL)*STORE3(IC,JC,KSTOL)
-              FORNOW1 = STORE7(IC,JC,KSTOL-1)*STORE3(IC,JC,KSTOL-1)
-              FORNOW2 = STORE7(IC,JC,KSTOL-2)*STORE3(IC,JC,KSTOL-2)
-              FORNOW3 = STORE7(IC,JC,KSTOL-3)*STORE3(IC,JC,KSTOL-3)
-              FORNOW4 = STORE7(IC,JC,KSTOL-4)*STORE3(IC,JC,KSTOL-4)
-              FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                 (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                 (1.0/4.0)*FORNOW4)/DELTAZ
-C            DO KC = KSTAW,KSTOM1
-C
-C              FORNOW = FORNOW
-C     +            + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*STORE3(IC,JC,KC)
-C
-C            ENDDO
+            DO KC = KSTAW,KSTOM1
+
+              FORNOW = FORNOW
+     +            + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*STORE3(IC,JC,KC)
+
+            ENDDO
             ERHS(IC,JC,KSTOL) = ERHS(IC,JC,KSTOL) + FORNOW
   
           ENDDO
         ENDDO
       ENDIF
-
+C                                                          TRANSP = MIX COND/CP
+C                                                         STORE1,2,3 = DTDX,Y,Z
 C     =========================================================================
 
 C     E-EQUATION: HEAT FLUX TERMS
@@ -765,21 +692,22 @@ C     ---------------------------
 C     SECOND DERIVATIVE TERMS
 
 C     TEMPERATURE SECOND DERIVATIVES
-      CALL D2FDX2(TRUN,STORE1)
-      CALL D2FDY2(TRUN,STORE2)
-      CALL D2FDZ2(TRUN,STORE3)
+C     RSC 01-APR-2022 USE STORE4,5,6
+      CALL D2FDX2(TRUN,STORE4)
+      CALL D2FDY2(TRUN,STORE5)
+      CALL D2FDZ2(TRUN,STORE6)
 
 C     BOUNDARY CONDITIONS
 C     BC IN X: DIFFUSIVE TERMS (HEAT FLUX) ZERO ON END POINTS
-      IF(FXLCON)CALL ZEROXL(STORE1)
-      IF(FXRCON)CALL ZEROXR(STORE1)
+      IF(FXLCON)CALL ZEROXL(STORE4)
+      IF(FXRCON)CALL ZEROXR(STORE4)
 C     BC IN Y: DIFFUSIVE TERMS (HEAT FLUX) ZERO ON END POINTS
-      IF(FYLCON)CALL ZEROYL(STORE2)
-      IF(FYRCON)CALL ZEROYR(STORE2)
+      IF(FYLCON)CALL ZEROYL(STORE5)
+      IF(FYRCON)CALL ZEROYR(STORE5)
 C     BC IN Z: DIFFUSIVE TERMS (HEAT FLUX) ZERO ON END POINTS
 C     RSC 28-JUN-2015 BUG FIX FZLCON
-      IF(FZLCON)CALL ZEROZL(STORE3)
-      IF(FZRCON)CALL ZEROZR(STORE3)
+      IF(FZLCON)CALL ZEROZL(STORE6)
+      IF(FZRCON)CALL ZEROZR(STORE6)
 
 C     COLLECT CONDUCTIVITY TERMS
       DO KC = KSTAL,KSTOL
@@ -787,9 +715,9 @@ C     COLLECT CONDUCTIVITY TERMS
           DO IC = ISTAL,ISTOL
 
             ERHS(IC,JC,KC) = ERHS(IC,JC,KC)
-     +                     +(STORE1(IC,JC,KC)
-     +                     + STORE2(IC,JC,KC)
-     +                     + STORE3(IC,JC,KC))
+     +                     +(STORE4(IC,JC,KC)
+     +                     + STORE5(IC,JC,KC)
+     +                     + STORE6(IC,JC,KC))
      +                      *STORE7(IC,JC,KC)
 
           ENDDO
@@ -802,7 +730,7 @@ C     ---------------------------------------------------
 C     E-EQUATION: PRESSURE-WORK AND VISCOUS WORK TERMS
 C                 EVALUATED IN SUBROUTINE RHSVEL
 C     ---------------------------------------------------
-C                                                              ALL STORES CLEAR
+C                                                          TRANSP = MIX COND/CP
 C     =========================================================================
 
 C     E-EQUATION: RADIATION HEAT LOSS
@@ -820,17 +748,7 @@ C     ===============================
 C     REACTION RATE FOR ALL SPECIES
 C     -----------------------------
       CALL CHRATE
-!---UA
-        DO ISPEC = 1,NSPEC
-          DO KC = KSTAL,KSTOL
-            DO JC = JSTAL,JSTOL
-              DO IC = ISTAL,ISTOL
-                RRTE(IC,JC,KC,ISPEC) = RATE(IC,JC,KC,ISPEC)
-              ENDDO
-            ENDDO
-          ENDDO
-        ENDDO
-!---end-UA      
+C                                                          TRANSP = MIX COND/CP
 C                                                          RATE = REACTION RATE
 C     =========================================================================
 
@@ -908,6 +826,7 @@ C     Z-DIRECTION
           ENDDO
         ENDDO
       ENDIF
+C                                                          TRANSP = MIX COND/CP
 C                                                          RATE = REACTION RATE
 C     =========================================================================
 
@@ -937,79 +856,128 @@ C     MIXTURE H IS PARALLEL
           ENDDO
         ENDDO
       ENDDO
+C                                                          TRANSP = MIX COND/CP
 C                                                          RATE = REACTION RATE
+C                                                             U,V,WCOR CORR VEL
 C                                                           VTMP = DIV CORR VEL
 C                                       	               WTMP = MIXTURE H
 C     =========================================================================
 
 C     MIXTURE AVERAGED TRANSPORT
 C     RSC 17-APR-2013
+C     RSC 01-APR-2022
+C     RSC 19-MAY-2023
 C     EVALUATE FIRST AND SECOND DERIVATIVES
 C     OF LN(MIXTURE MOLAR MASS), LN(PRESSURE) AND LN(TEMPERATURE)
 
 C     MIXTURE MOLAR MASS
       IF(FLMIXW)THEN
 
-        DO KC = KSTAB,KSTOB
-          DO JC = JSTAB,JSTOB
-            DO IC = ISTAB,ISTOB
+        CALL DFBYDX(WMOMIX,WD1X)
+        CALL DFBYDY(WMOMIX,WD1Y)
+        CALL DFBYDZ(WMOMIX,WD1Z)
+        CALL D2FDX2(WMOMIX,WD2X)
+        CALL D2FDY2(WMOMIX,WD2Y)
+        CALL D2FDZ2(WMOMIX,WD2Z)
 
-              STORE7(IC,JC,KC) = LOG(WMOMIX(IC,JC,KC))
+C       RSC/PJB 13-JUN-2023 BUG FIX J-INDEX
+        DO KC = KSTAL,KSTOL
+          DO JC = JSTAL,JSTOL
+            DO IC = ISTAL,ISTOL
+
+              FORNOW = ONE/WMOMIX(IC,JC,KC)
+              WD1X(IC,JC,KC) = WD1X(IC,JC,KC)*FORNOW
+              WD1Y(IC,JC,KC) = WD1Y(IC,JC,KC)*FORNOW
+              WD1Z(IC,JC,KC) = WD1Z(IC,JC,KC)*FORNOW
+              WD2X(IC,JC,KC) = WD2X(IC,JC,KC)*FORNOW
+     +                       - WD1X(IC,JC,KC)*WD1X(IC,JC,KC)
+              WD2Y(IC,JC,KC) = WD2Y(IC,JC,KC)*FORNOW
+     +                       - WD1Y(IC,JC,KC)*WD1Y(IC,JC,KC)
+              WD2Z(IC,JC,KC) = WD2Z(IC,JC,KC)*FORNOW
+     +                       - WD1Z(IC,JC,KC)*WD1Z(IC,JC,KC)
 
             ENDDO
           ENDDO
         ENDDO
-
-        CALL DFBYDX(STORE7,WD1X)
-        CALL DFBYDY(STORE7,WD1Y)
-        CALL DFBYDZ(STORE7,WD1Z)
-        CALL D2FDX2(STORE7,WD2X)
-        CALL D2FDY2(STORE7,WD2Y)
-        CALL D2FDZ2(STORE7,WD2Z)
 
       ENDIF
 
 C     PRESSURE
       IF(FLMIXP)THEN
 
-        DO KC = KSTAB,KSTOB
-          DO JC = JSTAB,JSTOB
-            DO IC = ISTAB,ISTOB
+        CALL DFBYDX(PRUN,PD1X)
+        CALL DFBYDY(PRUN,PD1Y)
+        CALL DFBYDZ(PRUN,PD1Z)
+        CALL D2FDX2(PRUN,PD2X)
+        CALL D2FDY2(PRUN,PD2Y)
+        CALL D2FDZ2(PRUN,PD2Z)
 
-              STORE7(IC,JC,KC) = LOG(PRUN(IC,JC,KC))
+C       RSC/PJB 13-JUN-2023 BUG FIX J-INDEX
+        DO KC = KSTAL,KSTOL
+          DO JC = JSTAL,JSTOL
+            DO IC = ISTAL,ISTOL
+
+              FORNOW = ONE/PRUN(IC,JC,KC)
+              PD1X(IC,JC,KC) = PD1X(IC,JC,KC)*FORNOW
+              PD1Y(IC,JC,KC) = PD1Y(IC,JC,KC)*FORNOW
+              PD1Z(IC,JC,KC) = PD1Z(IC,JC,KC)*FORNOW
+              PD2X(IC,JC,KC) = PD2X(IC,JC,KC)*FORNOW
+     +                       - PD1X(IC,JC,KC)*PD1X(IC,JC,KC)
+              PD2Y(IC,JC,KC) = PD2Y(IC,JC,KC)*FORNOW
+     +                       - PD1Y(IC,JC,KC)*PD1Y(IC,JC,KC)
+              PD2Z(IC,JC,KC) = PD2Z(IC,JC,KC)*FORNOW
+     +                       - PD1Z(IC,JC,KC)*PD1Z(IC,JC,KC)
 
             ENDDO
           ENDDO
         ENDDO
-        CALL DFBYDX(STORE7,PD1X)
-        CALL DFBYDY(STORE7,PD1Y)
-        CALL DFBYDZ(STORE7,PD1Z)
-        CALL D2FDX2(STORE7,PD2X)
-        CALL D2FDY2(STORE7,PD2Y)
-        CALL D2FDZ2(STORE7,PD2Z)
 
       ENDIF
 
 C     TEMPERATURE
       IF(FLMIXT)THEN
 
-C       TRANSP CONTAINS LN(T/TDIFGB)
-        CALL DFBYDX(TRANSP,TD1X)
-        CALL DFBYDY(TRANSP,TD1Y)
-        CALL DFBYDZ(TRANSP,TD1Z)
-        CALL D2FDX2(TRANSP,TD2X)
-        CALL D2FDY2(TRANSP,TD2Y)
-        CALL D2FDZ2(TRANSP,TD2Z)
+C       RSC 19-MAY-2023 BUG FIX GRADIENTS OF LN(TEMPERATURE)
+        CALL DFBYDX(TRUN,TD1X)
+        CALL DFBYDY(TRUN,TD1Y)
+        CALL DFBYDZ(TRUN,TD1Z)
+        CALL D2FDX2(TRUN,TD2X)
+        CALL D2FDY2(TRUN,TD2Y)
+        CALL D2FDZ2(TRUN,TD2Z)
+
+C       RSC/PJB 13-JUN-2023 BUG FIX J-INDEX
+        DO KC = KSTAL,KSTOL
+          DO JC = JSTAL,JSTOL
+            DO IC = ISTAL,ISTOL
+
+              FORNOW = ONE/TRUN(IC,JC,KC)
+              TD1X(IC,JC,KC) = TD1X(IC,JC,KC)*FORNOW
+              TD1Y(IC,JC,KC) = TD1Y(IC,JC,KC)*FORNOW
+              TD1Z(IC,JC,KC) = TD1Z(IC,JC,KC)*FORNOW
+              TD2X(IC,JC,KC) = TD2X(IC,JC,KC)*FORNOW
+     +                       - TD1X(IC,JC,KC)*TD1X(IC,JC,KC)
+              TD2Y(IC,JC,KC) = TD2Y(IC,JC,KC)*FORNOW
+     +                       - TD1Y(IC,JC,KC)*TD1Y(IC,JC,KC)
+              TD2Z(IC,JC,KC) = TD2Z(IC,JC,KC)*FORNOW
+     +                       - TD1Z(IC,JC,KC)*TD1Z(IC,JC,KC)
+
+            ENDDO
+          ENDDO
+        ENDDO
 
       ENDIF
-
+C                                                          TRANSP = MIX COND/CP
+C                                                          RATE = REACTION RATE
+C                                                             U,V,WCOR CORR VEL
+C                                                           VTMP = DIV CORR VEL
+C                                       	               WTMP = MIXTURE H
+C                                                              ALL STORES CLEAR
 C     =========================================================================
 
 C     RUN THROUGH ALL SPECIES
 C     -----------------------
 C     RSC 08-AUG-2012 EVALUATE ALL SPECIES
 C     RSC 08-JUN-2015 REMOVE Nth SPECIES TREATMENT
-C     VM: CONSERVATIVE-PRIMITIVE FIX
       DO ISPEC = 1,NSPEC
 
 C       =======================================================================
@@ -1025,10 +993,6 @@ C       Y IS PARALLEL
             ENDDO
           ENDDO
         ENDDO
-      END DO
-
-      DO ISPEC = 1,NSPEC
-      
 
 C       =======================================================================
 
@@ -1050,6 +1014,7 @@ C       COLLECT Y SOURCE TERMS IN RATE FOR NOW
 C                                                         RATE = Y SOURCE TERMS
 C                                                           VTMP = DIV CORR VEL
 C                                       	               WTMP = MIXTURE H
+C                                                              ALL STORES CLEAR
 C       =======================================================================
 
 C       Y EQUATION: CONVECTIVE TERMS
@@ -1111,6 +1076,7 @@ C       COLLECT DIV RHO U Y IN RATE FOR NOW
 C                                       	          RATE = Y SOURCE TERMS
 C                                                           VTMP = DIV CORR VEL
 C                                       	               WTMP = MIXTURE H
+C                                                              ALL STORES CLEAR
 C       =======================================================================
 
 C       SPECIES MASS FRACTION GRADIENT TERMS
@@ -1129,14 +1095,15 @@ C       SPECIES MASS FRACTION GRADIENTS
         CALL DFBYDX(STORE7,STORE1)
         CALL DFBYDY(STORE7,STORE2)
         CALL DFBYDZ(STORE7,STORE3)
-C                                                         STORE1,2,3 = DYDX,Y,Z
 C                                                         RATE = Y SOURCE TERMS
 C                                                           VTMP = DIV CORR VEL
 C                                       	               WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
 C       =======================================================================
 
 C       COLLECT SPECIES MASS FRACTION AND ITS GRADIENTS FOR BCs
 C       -------------------------------------------------------
+C       RSC 18-SEP-2022 BC TRANSVERSE TERMS
 
 C       X-DIRECTION: DYDX
         IF(FXLCNV)THEN
@@ -1144,14 +1111,9 @@ C       X-DIRECTION: DYDX
             DO JC = JSTAL,JSTOL
 
               STRYXL(JC,KC,ISPEC) = YRHS(ISTAL,JC,KC,ISPEC)
-              BCLYXL(JC,KC,ISPEC) = STORE1(ISTAL,JC,KC)
-
-C             TRANSVERSE TERM FOR SPECIES TRANSPORT (see Eq. 3.74 of Lodato's thesis)
-
-              T6BXL(JC,KC,ISPEC)=-STORE2(ISTAL,JC,KC)*
-     +                  VRHS(ISTAL,JC,KC)/DRHS(ISTAL,JC,KC)
-     +                 -STORE3(ISTAL,JC,KC)*WRHS(ISTAL,JC,KC)/
-     +                 DRHS(ISTAL,JC,KC)
+              BCYXXL(JC,KC,ISPEC) = STORE1(ISTAL,JC,KC)
+              BCYYXL(JC,KC,ISPEC) = STORE2(ISTAL,JC,KC)
+              BCYZXL(JC,KC,ISPEC) = STORE3(ISTAL,JC,KC)
 
             ENDDO
           ENDDO
@@ -1161,15 +1123,9 @@ C             TRANSVERSE TERM FOR SPECIES TRANSPORT (see Eq. 3.74 of Lodato's th
             DO JC = JSTAL,JSTOL
 
               STRYXR(JC,KC,ISPEC) = YRHS(ISTOL,JC,KC,ISPEC)
-              BCLYXR(JC,KC,ISPEC) = STORE1(ISTOL,JC,KC)
-
-C             TRANSVERSE TERM FOR SPECIES TRANSPORT (see Eq. 3.74 of Lodato's thesis)
-
-              T6BXR(JC,KC,ISPEC)=-STORE2(ISTOL,JC,KC)*
-     +                  VRHS(ISTOL,JC,KC)/DRHS(ISTOL,JC,KC)
-     +                 -STORE3(ISTOL,JC,KC)*WRHS(ISTOL,JC,KC)/
-     +                 DRHS(ISTOL,JC,KC)
-
+              BCYXXR(JC,KC,ISPEC) = STORE1(ISTOL,JC,KC)
+              BCYYXR(JC,KC,ISPEC) = STORE2(ISTOL,JC,KC)
+              BCYZXR(JC,KC,ISPEC) = STORE3(ISTOL,JC,KC)
 
             ENDDO
           ENDDO
@@ -1181,14 +1137,10 @@ C       Y-DIRECTION: DYDY
             DO IC = ISTAL,ISTOL
 
               STRYYL(IC,KC,ISPEC) = YRHS(IC,JSTAL,KC,ISPEC)
-              BCLYYL(IC,KC,ISPEC) = STORE2(IC,JSTAL,KC)
+              BCYXYL(IC,KC,ISPEC) = STORE1(IC,JSTAL,KC)
+              BCYYYL(IC,KC,ISPEC) = STORE2(IC,JSTAL,KC)
+              BCYZYL(IC,KC,ISPEC) = STORE3(IC,JSTAL,KC)
 
-C             TRANSVERSE TERM FOR SPECIES TRANSPORT (see Eq. 3.74 of Lodato's thesis)
-
-              T6BYL(IC,KC,ISPEC)=-STORE1(IC,JSTAL,KC)*
-     +                  URHS(IC,JSTAL,KC)/DRHS(IC,JSTAL,KC)
-     +                 -STORE3(IC,JSTAL,KC)*WRHS(IC,JSTAL,KC)/
-     +                 DRHS(IC,JSTAL,KC)
             ENDDO
           ENDDO
         ENDIF
@@ -1197,14 +1149,10 @@ C             TRANSVERSE TERM FOR SPECIES TRANSPORT (see Eq. 3.74 of Lodato's th
             DO IC = ISTAL,ISTOL
 
               STRYYR(IC,KC,ISPEC) = YRHS(IC,JSTOL,KC,ISPEC)
-              BCLYYR(IC,KC,ISPEC) = STORE2(IC,JSTOL,KC)
+              BCYXYR(IC,KC,ISPEC) = STORE1(IC,JSTOL,KC)
+              BCYYYR(IC,KC,ISPEC) = STORE2(IC,JSTOL,KC)
+              BCYZYR(IC,KC,ISPEC) = STORE3(IC,JSTOL,KC)
 
-C             TRANSVERSE TERM FOR SPECIES TRANSPORT (see Eq. 3.74 of Lodato's thesis)
-
-              T6BYR(IC,KC,ISPEC)=-STORE1(IC,JSTOL,KC)*
-     +                  URHS(IC,JSTOL,KC)/DRHS(IC,JSTOL,KC)
-     +                 -STORE3(IC,JSTOL,KC)*WRHS(IC,JSTOL,KC)/
-     +                 DRHS(IC,JSTOL,KC)
             ENDDO
           ENDDO
         ENDIF
@@ -1215,14 +1163,10 @@ C       Z-DIRECTION: DYDZ
             DO IC = ISTAL,ISTOL
 
               STRYZL(IC,JC,ISPEC) = YRHS(IC,JC,KSTAL,ISPEC)
-              BCLYZL(IC,JC,ISPEC) = STORE3(IC,JC,KSTAL)
+              BCYXZL(IC,JC,ISPEC) = STORE1(IC,JC,KSTAL)
+              BCYYZL(IC,JC,ISPEC) = STORE2(IC,JC,KSTAL)
+              BCYZZL(IC,JC,ISPEC) = STORE3(IC,JC,KSTAL)
 
-C             TRANSVERSE TERM FOR SPECIES TRANSPORT (see Eq. 3.74 of Lodato's thesis)
-
-              T6BZL(IC,JC,ISPEC)=-STORE1(IC,JC,KSTAL)*
-     +                  URHS(IC,JC,KSTAL)/DRHS(IC,JC,KSTAL)
-     +                 -STORE2(IC,JC,KSTAL)*VRHS(IC,JC,KSTAL)/
-     +                 DRHS(IC,JC,KSTAL)
             ENDDO
           ENDDO
         ENDIF
@@ -1231,24 +1175,17 @@ C             TRANSVERSE TERM FOR SPECIES TRANSPORT (see Eq. 3.74 of Lodato's th
             DO IC = ISTAL,ISTOL
 
               STRYZR(IC,JC,ISPEC) = YRHS(IC,JC,KSTOL,ISPEC)
-              BCLYZR(IC,JC,ISPEC) = STORE3(IC,JC,KSTOL)
+              BCYXZR(IC,JC,ISPEC) = STORE1(IC,JC,KSTOL)
+              BCYYZR(IC,JC,ISPEC) = STORE2(IC,JC,KSTOL)
+              BCYZZR(IC,JC,ISPEC) = STORE3(IC,JC,KSTOL)
 
-C             TRANSVERSE TERM FOR SPECIES TRANSPORT (see Eq. 3.74 of Lodato's thesis)
-
-              T6BZR(IC,JC,ISPEC)=-STORE1(IC,JC,KSTOL)*
-     +                  URHS(IC,JC,KSTOL)/DRHS(IC,JC,KSTOL)
-     +                 -STORE2(IC,JC,KSTOL)*VRHS(IC,JC,KSTOL)/
-     +                 DRHS(IC,JC,KSTOL)
             ENDDO
           ENDDO
         ENDIF
-
-
-
-C                                                         STORE1,2,3 = DYDX,Y,Z
 C                                                         RATE = Y SOURCE TERMS
 C                                                           VTMP = DIV CORR VEL
 C                                       	               WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
 C       =======================================================================
 
 C       Y EQUATION: CONVECTIVE TERMS
@@ -1272,147 +1209,135 @@ C       COLLECT HALF RHO U.DEL Y IN RATE FOR NOW
 C       ------------------------------------- 
 C       Y-EQUATION: CONVECTIVE TERMS COMPLETE
 C       ------------------------------------- 
-C                                                         STORE1,2,3 = DYDX,Y,Z
+C                                                          TRANSP = MIX COND/CP
 C                                                         RATE = Y SOURCE TERMS
 C                                                           VTMP = DIV CORR VEL
 C                                       	               WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
 C       =======================================================================
 
 C       Y-EQUATION: DIFFUSIVE TERMS
 C       ---------------------------
 C       E-EQUATION: FURTHER HEAT FLUX TERMS
 
-
 C       MASS DIFFUSIVITY FOR Y
-C       ----------------------
-C       ANALYTICAL FUNCTION OF TEMPERATURE
-C       TRANSP CONTAINS CONDUCTIVITY/CP
-C       STORE DIFFUSIVITY IN STORE7 FOR NOW
-C       Y DIFFUSIVITY IS PARALLEL
-        DO KC = KSTAB,KSTOB
-          DO JC = JSTAB,JSTOB
-            DO IC = ISTAB,ISTOB
-
-              STORE7(IC,JC,KC) = TRANSP(IC,JC,KC)*OLEWIS(ISPEC)
-
-            ENDDO
-          ENDDO
-        ENDDO
-C                                                         STORE1,2,3 = DYDX,Y,Z
-C                                                          STORE7 = DIFFUSIVITY
-C                                                         RATE = Y SOURCE TERMS
-C                                                           VTMP = DIV CORR VEL
-C                                       	               WTMP = MIXTURE H
-C       -----------------------------------------------------------------------
+C       --------------------
 
 C       MIXTURE AVERAGED TRANSPORT
 C       RSC 17-APR-2013
-C       TRANSP CONTAINS LN(T/TDIFGB)
+C       RSC 01-APR-2022
         IF(FLMAVT)THEN
+
+C         ---------------------------------------------------------------------
 
 C         MASS DIFFUSIVITY FOR EACH SPECIES
 C         RELATIVE TO CURRENT SPECIES
+C         Y DIFFUSIVITY IS PARALLEL
+C         STORE DIFFUSIVITY IN STORE7 FOR NOW
           DO KC = KSTAB,KSTOB
             DO JC = JSTAB,JSTOB
               DO IC = ISTAB,ISTOB
 
+C               MASS DIFFUSIVITY FOR EACH SPECIES
+                TRATIO = TRUN(IC,JC,KC)*TDIFGB
                 DO JSPEC = 1, NSPEC
                   FORNOW = DIFFCO(NCODIF,JSPEC,ISPEC)
                   DO ICP = NCODM1,1,-1
-              FORNOW = FORNOW*TRANSP(IC,JC,KC) + DIFFCO(ICP,JSPEC,ISPEC)
+                    FORNOW = FORNOW*TRATIO + DIFFCO(ICP,JSPEC,ISPEC)
                   ENDDO
-                  CTRANS(JSPEC) = EXP(FORNOW)*PDIFGB/PRUN(IC,JC,KC)
+                  CTRANS(JSPEC) = FORNOW
                 ENDDO
 
 C               COMBINATION RULE FOR MASS DIFFUSIVITY
                 COMBO1 = ZERO
-                COMBO2 = ZERO
                 DO JSPEC = 1, NSPEC
-                  FORNOW = YRHS(IC,JC,KC,JSPEC) + DFCTOL
-                  COMBO1 = COMBO1 + FORNOW
-                  COMBO2 = COMBO2 + FORNOW*OVWMOL(JSPEC)/CTRANS(JSPEC)
+                  COMBO1 = COMBO1 + XMOLFR(JSPEC,IC,JC,KC)*CTRANS(JSPEC)
                 ENDDO
-                FORNOW = YRHS(IC,JC,KC,ISPEC) + DFCTOL
-                COMBO1 = COMBO1 - FORNOW
-                COMBO2 = COMBO2 - FORNOW*OVWMOL(ISPEC)/CTRANS(ISPEC)
-                COMBO2 = COMBO2*WMOMIX(IC,JC,KC)
-                DIFMIX(IC,JC,KC) = DRHS(IC,JC,KC)*COMBO1/COMBO2 
+                COMBO1 = COMBO1 - XMOLFR(ISPEC,IC,JC,KC)*CTRANS(ISPEC)
+                COMBO1 = COMBO1*PRUN(IC,JC,KC)*PDIFGB
+                COMBO1 = (ONE - YRHS(IC,JC,KC,ISPEC))/COMBO1
+                DIFMIX(IC,JC,KC) = DRHS(IC,JC,KC)*COMBO1*TRATIO*TRATIO
                 STORE7(IC,JC,KC) = DIFMIX(IC,JC,KC)
-  
+ 
               ENDDO
             ENDDO
           ENDDO
-  
+
+C         ---------------------------------------------------------------------
+
+        ELSE
+
+C         ---------------------------------------------------------------------
+
+C         CONSTANT LEWIS NUMBER TRANSPORT
+
+C         Y DIFFUSIVITY IS PARALLEL
+C         STORE DIFFUSIVITY IN STORE7 FOR NOW
+          DO KC = KSTAB,KSTOB
+            DO JC = JSTAB,JSTOB
+              DO IC = ISTAB,ISTOB
+
+                STORE7(IC,JC,KC) = TRANSP(IC,JC,KC)*OLEWIS(ISPEC)
+
+              ENDDO
+            ENDDO
+          ENDDO
+
+C         ---------------------------------------------------------------------
+
         ENDIF
 
 C       -----------------------------------------------------------------------
 
 C       MIXTURE AVERAGED TRANSPORT
 C       RSC 17-APR-2013
-C       TRANSP CONTAINS LN(T/TDIFGB)
-        IF(FLMTDR(ISPEC))THEN
+C       RSC 01-APR-2022
+C       RSC 26-MAY-2023 BUG FIX THERMAL DIFFUSION RATIO
 
-C         THERMAL DIFFUSION RATIO FOR EACH SPECIES
-C         RELATIVE TO CURRENT SPECIES
+C       THERMAL DIFFUSION RATIO FOR EACH SPECIES
+C       RELATIVE TO CURRENT SPECIES
+        DO KC = KSTAB,KSTOB
+          DO JC = JSTAB,JSTOB
+            DO IC = ISTAB,ISTOB
 
-          DO KC = KSTAB,KSTOB
-            DO JC = JSTAB,JSTOB
-              DO IC = ISTAB,ISTOB
+              TDRMIX(IC,JC,KC) = ZERO
 
-                TDRMIX(IC,JC,KC) = ZERO
-
-              ENDDO
             ENDDO
           ENDDO
+        ENDDO
   
+        IF(FLMTDR(ISPEC))THEN
+
           DO JSPEC = 1, NSPEC
 
-            FLMTDS = FLMTDR(JSPEC).AND.(ISPEC.NE.JSPEC)
-            IF(FLMTDS)THEN
+            DO KC = KSTAB,KSTOB
+              DO JC = JSTAB,JSTOB
+                DO IC = ISTAB,ISTOB
 
-              DO KC = KSTAB,KSTOB
-                DO JC = JSTAB,JSTOB
-                  DO IC = ISTAB,ISTOB
-
-C                   THERMAL DIFFUSION RATIO FOR THIS SPECIES PAIR
-                    COMBO2 = TRUN(IC,JC,KC)/TDIFGB
-                    FORNOW = TDRCCO(NCOTDR,JSPEC,ISPEC)
-                    DO ICP = NCOTM1,1,-1
-                      FORNOW = FORNOW*COMBO2 + TDRCCO(ICP,JSPEC,ISPEC)
-                    ENDDO
-                    CTRANS(JSPEC) = FORNOW
-
-C                   COMBINATION RULE FOR THERMAL DIFFUSIION RATIO
-                    FORNOW = YRHS(IC,JC,KC,JSPEC)*OVWMOL(JSPEC)
-                    TDRMIX(IC,JC,KC) = TDRMIX(IC,JC,KC)
-     +                        + FORNOW*WMOMIX(IC,JC,KC)*CTRANS(JSPEC)
-  
+C                 THERMAL DIFFUSION RATIO FOR THIS SPECIES PAIR
+                  TRATIO = TRUN(IC,JC,KC)*TDIFGB
+                  FORNOW = TDRCCO(NCOTDR,JSPEC,ISPEC)
+                  DO ICP = NCOTM1,1,-1
+                    FORNOW = FORNOW*TRATIO + TDRCCO(ICP,JSPEC,ISPEC)
                   ENDDO
+
+C                 COMBINATION RULE FOR THERMAL DIFFUSIION RATIO
+                  TDRMIX(IC,JC,KC) = TDRMIX(IC,JC,KC)
+     +                             + XMOLFR(JSPEC,IC,JC,KC)*FORNOW
+  
                 ENDDO
               ENDDO
+            ENDDO
   
-            ENDIF
-
           ENDDO
 
-C         VM WITH HELP FROM RSC: CORRECTION IN THERMAL DIFFUSION TO ADD MOLE-FRACTION OF
-C         ORIGINAL SPECIES
-C         TDRCCO IS THERMAL DIFFUSION FACTOR (MASON ET AL. 1968)
-C         NEED TO MULTIPLY BY X_ALPHA AS WELL
-
-          DO KC=KSTAB,KSTOB
-            DO JC=JSTAB,JSTOB
-              DO IC=ISTAB,ISTOB
-                 TDRMIX(IC,JC,KC)=TDRMIX(IC,JC,KC)*YRHS(IC,JC,KC,ISPEC)
-     +                           *WMOMIX(IC,JC,KC)*OVWMOL(ISPEC)
-
-                 
-               END DO
-            END DO
-          END DO
-
         ENDIF
-
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                           VTMP = DIV CORR VEL
+C                                       	               WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
+C                                                          STORE7 = DIFFUSIVITY
 C       =======================================================================
 
 C       DIFFUSION CORRECTION VELOCITY
@@ -1430,11 +1355,12 @@ C       DIFFUSION CORRECTION VELOCITY
             ENDDO
           ENDDO
         ENDDO
-C                                                         STORE1,2,3 = DYDX,Y,Z
-C                                                          STORE7 = DIFFUSIVITY
+C                                                          TRANSP = MIX COND/CP
 C                                                         RATE = Y SOURCE TERMS
 C                                                           VTMP = DIV CORR VEL
 C                                       	               WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
+C                                                          STORE7 = DIFFUSIVITY
 C       =======================================================================
 
 C       SPECIES ENTHALPY
@@ -1468,12 +1394,13 @@ C             MIXTURE H
             ENDDO
           ENDDO
         ENDDO
-C                                                         STORE1,2,3 = DYDX,Y,Z
-C                                                          STORE7 = DIFFUSIVITY
+C                                                          TRANSP = MIX COND/CP
 C                                       	          RATE = Y SOURCE TERMS
 C                                       	               UTMP = SPECIES H
 C                                                           VTMP = DIV CORR VEL
 C                                       	               WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
+C                                                          STORE7 = DIFFUSIVITY
 C       =======================================================================
 
 C       COLLECT SPECIES H FOR BCs
@@ -1538,12 +1465,13 @@ C       Z-DIRECTION
             ENDDO
           ENDDO
         ENDIF
-C                                                         STORE1,2,3 = DYDX,Y,Z
-C                                                          STORE7 = DIFFUSIVITY
+C                                                          TRANSP = MIX COND/CP
 C                                       	          RATE = Y SOURCE TERMS
 C                                       	               UTMP = SPECIES H
 C                                                           VTMP = DIV CORR VEL
 C                                       	               WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
+C                                                          STORE7 = DIFFUSIVITY
 C       =======================================================================
 
 C       MIXTURE AVERAGED TRANSPORT
@@ -1563,7 +1491,13 @@ C       ADD DUFOUR EFFECT TERMS TO SPECIES ENTHALPY
           ENDDO
 
         ENDIF
-
+C                                                          TRANSP = MIX COND/CP
+C                                       	          RATE = Y SOURCE TERMS
+C                                       	               UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                       	               WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
+C                                                          STORE7 = DIFFUSIVITY
 C       =======================================================================
 
 C       Y EQUATION: DIFFUSIVE TERMS
@@ -1630,12 +1564,13 @@ C       E EQUATION
             ENDDO
           ENDDO
         ENDDO
-C                                                         STORE1,2,3 = DYDX,Y,Z
-C                                                          STORE7 = DIFFUSIVITY
+C                                                          TRANSP = MIX COND/CP
 C                                                         RATE = Y SOURCE TERMS
 C                                                              UTMP = SPECIES H
 C                                                           VTMP = DIV CORR VEL
 C                                                              WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
+C                                                          STORE7 = DIFFUSIVITY
 C       =======================================================================
 
 C       E-EQUATION: FURTHER HEAT FLUX TERMS
@@ -1682,12 +1617,13 @@ C       BC IN Z: DIFFUSIVE TERMS (HEAT FLUX) ZERO ON END POINTS
             ENDDO
           ENDDO
         ENDDO
-C                                                         STORE1,2,3 = DYDX,Y,Z
-C                                                          STORE7 = DIFFUSIVITY
+C                                                          TRANSP = MIX COND/CP
 C                                                         RATE = Y SOURCE TERMS
 C                                                              UTMP = SPECIES H
 C                                                           VTMP = DIV CORR VEL
 C                                                              WTMP = MIXTURE H
+C                                                         STORE1,2,3 = DYDX,Y,Z
+C                                                          STORE7 = DIFFUSIVITY
 C       =======================================================================
 
 C       Y-EQUATION: DIFFUSIVE TERMS
@@ -1700,22 +1636,12 @@ C       WALL BC: ENTHALPY DIFFUSION TERMS
             DO JC = JSTAL,JSTOL
 
               FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(ISTAL,JC,KC)*STORE1(ISTAL,JC,KC)
-              FORNOW1 = STORE7(ISTAL+1,JC,KC)*STORE1(ISTAL+1,JC,KC)
-              FORNOW2 = STORE7(ISTAL+2,JC,KC)*STORE1(ISTAL+2,JC,KC)
-              FORNOW3 = STORE7(ISTAL+3,JC,KC)*STORE1(ISTAL+3,JC,KC)
-              FORNOW4 = STORE7(ISTAL+4,JC,KC)*STORE1(ISTAL+4,JC,KC)
-              FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                 (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                 (1.0/4.0)*FORNOW4)/DELTAX
-C              DO IC = ISTAP1,ISTOW
-C
-C                FORNOW = FORNOW
-C     +              + ACBCXL(IC-1)*STORE7(IC,JC,KC)*STORE1(IC,JC,KC)
-C
-C              ENDDO
-C               END NC&VM
+              DO IC = ISTAP1,ISTOW
+
+                FORNOW = FORNOW
+     +              + ACBCXL(IC-1)*STORE7(IC,JC,KC)*STORE1(IC,JC,KC)
+
+              ENDDO
               RATE(ISTAL,JC,KC,ISPEC) = RATE(ISTAL,JC,KC,ISPEC)
      +                                + FORNOW
               VTMP(ISTAL,JC,KC) = VTMP(ISTAL,JC,KC) + FORNOW
@@ -1730,21 +1656,12 @@ C               END NC&VM
             DO JC = JSTAL,JSTOL
 
               FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(ISTOL,JC,KC)*STORE1(ISTOL,JC,KC)
-              FORNOW1 = STORE7(ISTOL-1,JC,KC)*STORE1(ISTOL-1,JC,KC)
-              FORNOW2 = STORE7(ISTOL-2,JC,KC)*STORE1(ISTOL-2,JC,KC)
-              FORNOW3 = STORE7(ISTOL-3,JC,KC)*STORE1(ISTOL-3,JC,KC)
-              FORNOW4 = STORE7(ISTOL-4,JC,KC)*STORE1(ISTOL-4,JC,KC)
-              FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                 (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                 (1.0/4.0)*FORNOW4)/DELTAX
-C              DO IC = ISTAW,ISTOM1
-C
-C                FORNOW = FORNOW
-C     +              + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*STORE1(IC,JC,KC)
-C
-C              ENDDO
+              DO IC = ISTAW,ISTOM1
+
+                FORNOW = FORNOW
+     +              + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*STORE1(IC,JC,KC)
+
+              ENDDO
               RATE(ISTOL,JC,KC,ISPEC) = RATE(ISTOL,JC,KC,ISPEC)
      +                                + FORNOW
               VTMP(ISTOL,JC,KC) = VTMP(ISTOL,JC,KC) + FORNOW
@@ -1759,21 +1676,12 @@ C              ENDDO
             DO IC = ISTAL,ISTOL
 
               FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(IC,JSTAL,KC)*STORE2(IC,JSTAL,KC)
-              FORNOW1 = STORE7(IC,JSTAL+1,KC)*STORE2(IC,JSTAL+1,KC)
-              FORNOW2 = STORE7(IC,JSTAL+2,KC)*STORE2(IC,JSTAL+2,KC)
-              FORNOW3 = STORE7(IC,JSTAL+3,KC)*STORE2(IC,JSTAL+3,KC)
-              FORNOW4 = STORE7(IC,JSTAL+4,KC)*STORE2(IC,JSTAL+4,KC)
-              FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                 (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                 (1.0/4.0)*FORNOW4)/DELTAY
-C              DO JC = JSTAP1,JSTOW
-C
-C                FORNOW = FORNOW
-C     +              + ACBCYL(JC-1)*STORE7(IC,JC,KC)*STORE2(IC,JC,KC)
-C
-C              ENDDO
+              DO JC = JSTAP1,JSTOW
+
+                FORNOW = FORNOW
+     +              + ACBCYL(JC-1)*STORE7(IC,JC,KC)*STORE2(IC,JC,KC)
+
+              ENDDO
               RATE(IC,JSTAL,KC,ISPEC) = RATE(IC,JSTAL,KC,ISPEC)
      +                                + FORNOW
               VTMP(IC,JSTAL,KC) = VTMP(IC,JSTAL,KC) + FORNOW
@@ -1788,21 +1696,12 @@ C              ENDDO
             DO IC = ISTAL,ISTOL
 
               FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(IC,JSTOL,KC)*STORE2(IC,JSTOL,KC)
-              FORNOW1 = STORE7(IC,JSTOL-1,KC)*STORE2(IC,JSTOL-1,KC)
-              FORNOW2 = STORE7(IC,JSTOL-2,KC)*STORE2(IC,JSTOL-2,KC)
-              FORNOW3 = STORE7(IC,JSTOL-3,KC)*STORE2(IC,JSTOL-3,KC)
-              FORNOW4 = STORE7(IC,JSTOL-4,KC)*STORE2(IC,JSTOL-4,KC)
-              FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                 (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                 (1.0/4.0)*FORNOW4)/DELTAY
-C              DO JC = JSTAW,JSTOM1
-C
-C                FORNOW = FORNOW
-C     +              + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*STORE2(IC,JC,KC)
-C
-C              ENDDO
+              DO JC = JSTAW,JSTOM1
+
+                FORNOW = FORNOW
+     +              + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*STORE2(IC,JC,KC)
+
+              ENDDO
               RATE(IC,JSTOL,KC,ISPEC) = RATE(IC,JSTOL,KC,ISPEC)
      +                                + FORNOW
               VTMP(IC,JSTOL,KC) = VTMP(IC,JSTOL,KC) + FORNOW
@@ -1817,21 +1716,12 @@ C              ENDDO
             DO IC = ISTAL,ISTOL
 
               FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(IC,JC,KSTAL)*STORE3(IC,JC,KSTAL)
-              FORNOW1 = STORE7(IC,JC,KSTAL+1)*STORE3(IC,JC,KSTAL+1)
-              FORNOW2 = STORE7(IC,JC,KSTAL+2)*STORE3(IC,JC,KSTAL+2)
-              FORNOW3 = STORE7(IC,JC,KSTAL+3)*STORE3(IC,JC,KSTAL+3)
-              FORNOW4 = STORE7(IC,JC,KSTAL+4)*STORE3(IC,JC,KSTAL+4)
-              FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                 (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                 (1.0/4.0)*FORNOW4)/DELTAZ
-C              DO KC = KSTAP1,KSTOW
-C
-C                FORNOW = FORNOW
-C     +              + ACBCZL(KC-1)*STORE7(IC,JC,KC)*STORE3(IC,JC,KC)
-C
-C              ENDDO
+              DO KC = KSTAP1,KSTOW
+
+                FORNOW = FORNOW
+     +              + ACBCZL(KC-1)*STORE7(IC,JC,KC)*STORE3(IC,JC,KC)
+
+              ENDDO
               RATE(IC,JC,KSTAL,ISPEC) = RATE(IC,JC,KSTAL,ISPEC)
      +                                + FORNOW
               VTMP(IC,JC,KSTAL) = VTMP(IC,JC,KSTAL) + FORNOW
@@ -1846,21 +1736,12 @@ C              ENDDO
             DO IC = ISTAL,ISTOL
 
               FORNOW = ZERO
-C             NC&VM: CALCULATING DERIVATIVE AT THE WALL
-              FORNOW0 = STORE7(IC,JC,KSTOL)*STORE3(IC,JC,KSTOL)
-              FORNOW1 = STORE7(IC,JC,KSTOL-1)*STORE3(IC,JC,KSTOL-1)
-              FORNOW2 = STORE7(IC,JC,KSTOL-2)*STORE3(IC,JC,KSTOL-2)
-              FORNOW3 = STORE7(IC,JC,KSTOL-3)*STORE3(IC,JC,KSTOL-3)
-              FORNOW4 = STORE7(IC,JC,KSTOL-4)*STORE3(IC,JC,KSTOL-4)
-              FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                 (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                 (1.0/4.0)*FORNOW4)/DELTAZ
-C              DO KC = KSTAW,KSTOM1
-C
-C                FORNOW = FORNOW
-C     +              + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*STORE3(IC,JC,KC)
-C
-C              ENDDO
+              DO KC = KSTAW,KSTOM1
+
+                FORNOW = FORNOW
+     +              + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*STORE3(IC,JC,KC)
+
+              ENDDO
               RATE(IC,JC,KSTOL,ISPEC) = RATE(IC,JC,KSTOL,ISPEC)
      +                                + FORNOW
               VTMP(IC,JC,KSTOL) = VTMP(IC,JC,KSTOL) + FORNOW
@@ -1870,7 +1751,12 @@ C              ENDDO
             ENDDO
           ENDDO
         ENDIF
-
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                                              WTMP = MIXTURE H
+C                                                          STORE7 = DIFFUSIVITY
 C       =======================================================================
 
 C       Y-EQUATION: DIFFUSIVE TERMS
@@ -1957,9 +1843,12 @@ C       E EQUATION
             ENDDO
           ENDDO
         ENDDO
+C                                                          TRANSP = MIX COND/CP
 C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
 C                                                           VTMP = DIV CORR VEL
 C                                                              WTMP = MIXTURE H
+C                                                              ALL STORES CLEAR
 C       =======================================================================
 
 C       MIXTURE AVERAGED TRANSPORT
@@ -2105,8 +1994,13 @@ C         BC IN Z: DIFFUSIVE TERMS (HEAT FLUX) ZERO ON END POINTS
               ENDDO
             ENDDO
           ENDDO
-
-C         ====================================================================
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                                              WTMP = MIXTURE H
+C                                                              STORE7 = RHO D Y
+C         =====================================================================
 
 C         Y-EQUATION: DIFFUSIVE TERMS
 C         ---------------------------
@@ -2118,22 +2012,12 @@ C         WALL BC: ENTHALPY DIFFUSION TERMS
               DO JC = JSTAL,JSTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(ISTAL,JC,KC)*WD1X(ISTAL,JC,KC)
-                FORNOW1 = STORE7(ISTAL+1,JC,KC)*WD1X(ISTAL+1,JC,KC)
-                FORNOW2 = STORE7(ISTAL+2,JC,KC)*WD1X(ISTAL+2,JC,KC)
-                FORNOW3 = STORE7(ISTAL+3,JC,KC)*WD1X(ISTAL+3,JC,KC)
-                FORNOW4 = STORE7(ISTAL+4,JC,KC)*WD1X(ISTAL+4,JC,KC)
-                FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                   (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                   (1.0/4.0)*FORNOW4)/DELTAX
-C                DO IC = ISTAP1,ISTOW
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCXL(IC-1)*STORE7(IC,JC,KC)*WD1X(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO IC = ISTAP1,ISTOW
+
+                  FORNOW = FORNOW
+     +                + ACBCXL(IC-1)*STORE7(IC,JC,KC)*WD1X(IC,JC,KC)
+
+                ENDDO
                 RATE(ISTAL,JC,KC,ISPEC) = RATE(ISTAL,JC,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(ISTAL,JC,KC) = VTMP(ISTAL,JC,KC) + FORNOW
@@ -2148,22 +2032,12 @@ C               END NC&VM
               DO JC = JSTAL,JSTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(ISTOL,JC,KC)*WD1X(ISTOL,JC,KC)
-                FORNOW1 = STORE7(ISTOL-1,JC,KC)*WD1X(ISTOL-1,JC,KC)
-                FORNOW2 = STORE7(ISTOL-2,JC,KC)*WD1X(ISTOL-2,JC,KC)
-                FORNOW3 = STORE7(ISTOL-3,JC,KC)*WD1X(ISTOL-3,JC,KC)
-                FORNOW4 = STORE7(ISTOL-4,JC,KC)*WD1X(ISTOL-4,JC,KC)
-                FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                   (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                   (1.0/4.0)*FORNOW4)/DELTAX
-C                DO IC = ISTAW,ISTOM1
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*WD1X(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO IC = ISTAW,ISTOM1
+
+                  FORNOW = FORNOW
+     +                + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*WD1X(IC,JC,KC)
+
+                ENDDO
                 RATE(ISTOL,JC,KC,ISPEC) = RATE(ISTOL,JC,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(ISTOL,JC,KC) = VTMP(ISTOL,JC,KC) + FORNOW
@@ -2178,22 +2052,12 @@ C               END NC&VM
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JSTAL,KC)*WD1Y(IC,JSTAL,KC)
-                FORNOW1 = STORE7(IC,JSTAL+1,KC)*WD1Y(IC,JSTAL+1,KC)
-                FORNOW2 = STORE7(IC,JSTAL+2,KC)*WD1Y(IC,JSTAL+2,KC)
-                FORNOW3 = STORE7(IC,JSTAL+3,KC)*WD1Y(IC,JSTAL+3,KC)
-                FORNOW4 = STORE7(IC,JSTAL+4,KC)*WD1Y(IC,JSTAL+4,KC)
-                FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                   (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                   (1.0/4.0)*FORNOW4)/DELTAY
-C                DO JC = JSTAP1,JSTOW
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCYL(JC-1)*STORE7(IC,JC,KC)*WD1Y(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO JC = JSTAP1,JSTOW
+
+                  FORNOW = FORNOW
+     +                + ACBCYL(JC-1)*STORE7(IC,JC,KC)*WD1Y(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JSTAL,KC,ISPEC) = RATE(IC,JSTAL,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JSTAL,KC) = VTMP(IC,JSTAL,KC) + FORNOW
@@ -2208,22 +2072,12 @@ C               END NC&VM
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JSTOL,KC)*WD1Y(IC,JSTOL,KC)
-                FORNOW1 = STORE7(IC,JSTOL-1,KC)*WD1Y(IC,JSTOL-1,KC)
-                FORNOW2 = STORE7(IC,JSTOL-2,KC)*WD1Y(IC,JSTOL-2,KC)
-                FORNOW3 = STORE7(IC,JSTOL-3,KC)*WD1Y(IC,JSTOL-3,KC)
-                FORNOW4 = STORE7(IC,JSTOL-4,KC)*WD1Y(IC,JSTOL-4,KC)
-                FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                   (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                   (1.0/4.0)*FORNOW4)/DELTAY
-C                DO JC = JSTAW,JSTOM1
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*WD1Y(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO JC = JSTAW,JSTOM1
+
+                  FORNOW = FORNOW
+     +                + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*WD1Y(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JSTOL,KC,ISPEC) = RATE(IC,JSTOL,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JSTOL,KC) = VTMP(IC,JSTOL,KC) + FORNOW
@@ -2238,22 +2092,12 @@ C               END NC&VM
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JC,KSTAL)*WD1Z(IC,JC,KSTAL)
-                FORNOW1 = STORE7(IC,JC,KSTAL+1)*WD1Z(IC,JC,KSTAL+1)
-                FORNOW2 = STORE7(IC,JC,KSTAL+2)*WD1Z(IC,JC,KSTAL+2)
-                FORNOW3 = STORE7(IC,JC,KSTAL+3)*WD1Z(IC,JC,KSTAL+3)
-                FORNOW4 = STORE7(IC,JC,KSTAL+4)*WD1Z(IC,JC,KSTAL+4)
-                FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                   (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                   (1.0/4.0)*FORNOW4)/DELTAZ
-C                DO KC = KSTAP1,KSTOW
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCZL(KC-1)*STORE7(IC,JC,KC)*WD1Z(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO KC = KSTAP1,KSTOW
+
+                  FORNOW = FORNOW
+     +                + ACBCZL(KC-1)*STORE7(IC,JC,KC)*WD1Z(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JC,KSTAL,ISPEC) = RATE(IC,JC,KSTAL,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JC,KSTAL) = VTMP(IC,JC,KSTAL) + FORNOW
@@ -2268,22 +2112,12 @@ C               END NC&VM
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JC,KSTOL)*WD1Z(IC,JC,KSTOL)
-                FORNOW1 = STORE7(IC,JC,KSTOL-1)*WD1Z(IC,JC,KSTOL-1)
-                FORNOW2 = STORE7(IC,JC,KSTOL-2)*WD1Z(IC,JC,KSTOL-2)
-                FORNOW3 = STORE7(IC,JC,KSTOL-3)*WD1Z(IC,JC,KSTOL-3)
-                FORNOW4 = STORE7(IC,JC,KSTOL-4)*WD1Z(IC,JC,KSTOL-4)
-                FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                   (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                   (1.0/4.0)*FORNOW4)/DELTAZ
-C                DO KC = KSTAW,KSTOM1
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*WD1Z(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO KC = KSTAW,KSTOM1
+
+                  FORNOW = FORNOW
+     +                + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*WD1Z(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JC,KSTOL,ISPEC) = RATE(IC,JC,KSTOL,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JC,KSTOL) = VTMP(IC,JC,KSTOL) + FORNOW
@@ -2293,8 +2127,13 @@ C               END NC&VM
               ENDDO
             ENDDO
           ENDIF
-
-C         ====================================================================
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                                              WTMP = MIXTURE H
+C                                                              STORE7 = RHO D Y
+C         =====================================================================
 
 C         Y-EQUATION: DIFFUSIVE TERMS
 C         E-EQUATION: FURTHER HEAT FLUX TERMS
@@ -2358,7 +2197,12 @@ C         E EQUATION
 
         ENDIF
 C       MIXTURE MOLAR MASS TERMS
-
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                                              WTMP = MIXTURE H
+C                                                              STORE7 = RHO D Y
 C       =======================================================================
 
 C       PRESSURE DIFFUSION TERMS
@@ -2501,8 +2345,13 @@ C         BC IN Z: DIFFUSIVE TERMS (HEAT FLUX) ZERO ON END POINTS
               ENDDO
             ENDDO
           ENDDO
-
-C         ====================================================================
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                                              WTMP = MIXTURE H
+C                                                              STORE7 = RHO D Y
+C         =====================================================================
 
 C         Y-EQUATION: DIFFUSIVE TERMS
 C         ---------------------------
@@ -2514,22 +2363,12 @@ C         WALL BC: ENTHALPY DIFFUSION TERMS
               DO JC = JSTAL,JSTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(ISTAL,JC,KC)*PD1X(ISTAL,JC,KC)
-                FORNOW1 = STORE7(ISTAL+1,JC,KC)*PD1X(ISTAL+1,JC,KC)
-                FORNOW2 = STORE7(ISTAL+2,JC,KC)*PD1X(ISTAL+2,JC,KC)
-                FORNOW3 = STORE7(ISTAL+3,JC,KC)*PD1X(ISTAL+3,JC,KC)
-                FORNOW4 = STORE7(ISTAL+4,JC,KC)*PD1X(ISTAL+4,JC,KC)
-                FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                   (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                   (1.0/4.0)*FORNOW4)/DELTAX
-C                DO IC = ISTAP1,ISTOW
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCXL(IC-1)*STORE7(IC,JC,KC)*PD1X(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO IC = ISTAP1,ISTOW
+
+                  FORNOW = FORNOW
+     +                + ACBCXL(IC-1)*STORE7(IC,JC,KC)*PD1X(IC,JC,KC)
+
+                ENDDO
                 RATE(ISTAL,JC,KC,ISPEC) = RATE(ISTAL,JC,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(ISTAL,JC,KC) = VTMP(ISTAL,JC,KC) + FORNOW
@@ -2544,22 +2383,12 @@ C               END NC&VM
               DO JC = JSTAL,JSTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(ISTOL,JC,KC)*PD1X(ISTOL,JC,KC)
-                FORNOW1 = STORE7(ISTOL-1,JC,KC)*PD1X(ISTOL-1,JC,KC)
-                FORNOW2 = STORE7(ISTOL-2,JC,KC)*PD1X(ISTOL-2,JC,KC)
-                FORNOW3 = STORE7(ISTOL-3,JC,KC)*PD1X(ISTOL-3,JC,KC)
-                FORNOW4 = STORE7(ISTOL-4,JC,KC)*PD1X(ISTOL-4,JC,KC)
-                FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                   (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                   (1.0/4.0)*FORNOW4)/DELTAX
-C                DO IC = ISTAW,ISTOM1
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*PD1X(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO IC = ISTAW,ISTOM1
+
+                  FORNOW = FORNOW
+     +                + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*PD1X(IC,JC,KC)
+
+                ENDDO
                 RATE(ISTOL,JC,KC,ISPEC) = RATE(ISTOL,JC,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(ISTOL,JC,KC) = VTMP(ISTOL,JC,KC) + FORNOW
@@ -2574,22 +2403,12 @@ C               END NC&VM
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JSTAL,KC)*PD1Y(IC,JSTAL,KC)
-                FORNOW1 = STORE7(IC,JSTAL+1,KC)*PD1Y(IC,JSTAL+1,KC)
-                FORNOW2 = STORE7(IC,JSTAL+2,KC)*PD1Y(IC,JSTAL+2,KC)
-                FORNOW3 = STORE7(IC,JSTAL+3,KC)*PD1Y(IC,JSTAL+3,KC)
-                FORNOW4 = STORE7(IC,JSTAL+4,KC)*PD1Y(IC,JSTAL+4,KC)
-                FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                   (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                   (1.0/4.0)*FORNOW4)/DELTAY
-C                DO JC = JSTAP1,JSTOW
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCYL(JC-1)*STORE7(IC,JC,KC)*PD1Y(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO JC = JSTAP1,JSTOW
+
+                  FORNOW = FORNOW
+     +                + ACBCYL(JC-1)*STORE7(IC,JC,KC)*PD1Y(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JSTAL,KC,ISPEC) = RATE(IC,JSTAL,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JSTAL,KC) = VTMP(IC,JSTAL,KC) + FORNOW
@@ -2604,22 +2423,12 @@ C               END NC&VM
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JSTOL,KC)*PD1Y(IC,JSTOL,KC)
-                FORNOW1 = STORE7(IC,JSTOL-1,KC)*PD1Y(IC,JSTOL-1,KC)
-                FORNOW2 = STORE7(IC,JSTOL-2,KC)*PD1Y(IC,JSTOL-2,KC)
-                FORNOW3 = STORE7(IC,JSTOL-3,KC)*PD1Y(IC,JSTOL-3,KC)
-                FORNOW4 = STORE7(IC,JSTOL-4,KC)*PD1Y(IC,JSTOL-4,KC)
-                FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                   (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                   (1.0/4.0)*FORNOW4)/DELTAY
-C                DO JC = JSTAW,JSTOM1
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*PD1Y(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO JC = JSTAW,JSTOM1
+
+                  FORNOW = FORNOW
+     +                + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*PD1Y(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JSTOL,KC,ISPEC) = RATE(IC,JSTOL,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JSTOL,KC) = VTMP(IC,JSTOL,KC) + FORNOW
@@ -2634,22 +2443,12 @@ C               END NC&VM
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JC,KSTAL)*PD1Z(IC,JC,KSTAL)
-                FORNOW1 = STORE7(IC,JC,KSTAL+1)*PD1Z(IC,JC,KSTAL+1)
-                FORNOW2 = STORE7(IC,JC,KSTAL+2)*PD1Z(IC,JC,KSTAL+2)
-                FORNOW3 = STORE7(IC,JC,KSTAL+3)*PD1Z(IC,JC,KSTAL+3)
-                FORNOW4 = STORE7(IC,JC,KSTAL+4)*PD1Z(IC,JC,KSTAL+4)
-                FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                   (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                   (1.0/4.0)*FORNOW4)/DELTAZ
-C                DO KC = KSTAP1,KSTOW
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCZL(KC-1)*STORE7(IC,JC,KC)*PD1Z(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO KC = KSTAP1,KSTOW
+
+                  FORNOW = FORNOW
+     +                + ACBCZL(KC-1)*STORE7(IC,JC,KC)*PD1Z(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JC,KSTAL,ISPEC) = RATE(IC,JC,KSTAL,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JC,KSTAL) = VTMP(IC,JC,KSTAL) + FORNOW
@@ -2664,22 +2463,12 @@ C               END NC&VM
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JC,KSTOL)*PD1Z(IC,JC,KSTOL)
-                FORNOW1 = STORE7(IC,JC,KSTOL-1)*PD1Z(IC,JC,KSTOL-1)
-                FORNOW2 = STORE7(IC,JC,KSTOL-2)*PD1Z(IC,JC,KSTOL-2)
-                FORNOW3 = STORE7(IC,JC,KSTOL-3)*PD1Z(IC,JC,KSTOL-3)
-                FORNOW4 = STORE7(IC,JC,KSTOL-4)*PD1Z(IC,JC,KSTOL-4)
-                FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                   (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                   (1.0/4.0)*FORNOW4)/DELTAZ
-C                DO KC = KSTAW,KSTOM1
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*PD1Z(IC,JC,KC)
-C
-C                ENDDO
-C               END NC&VM
+                DO KC = KSTAW,KSTOM1
+
+                  FORNOW = FORNOW
+     +                + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*PD1Z(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JC,KSTOL,ISPEC) = RATE(IC,JC,KSTOL,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JC,KSTOL) = VTMP(IC,JC,KSTOL) + FORNOW
@@ -2689,8 +2478,13 @@ C               END NC&VM
               ENDDO
             ENDDO
           ENDIF
-
-C         ====================================================================
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                                              WTMP = MIXTURE H
+C                                                              STORE7 = RHO D Y
+C         =====================================================================
 
 C         Y-EQUATION: DIFFUSIVE TERMS
 C         E-EQUATION: FURTHER HEAT FLUX TERMS
@@ -2753,10 +2547,17 @@ C         E EQUATION
           ENDDO
 
         ENDIF
-
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                                              WTMP = MIXTURE H
+C                                                              STORE7 = RHO D Y
 C       =======================================================================
 
 C       SORET EFFECT (THERMAL DIFFUSION) TERMS
+C       RSC 16-JUN-2023 BUG FIX THERMAL DIFFUSION RATIO
+C       RSC 22-MAR-2026 BUG FIX THERMAL DIFFUSION RATIO
         IF(FLMSOR(ISPEC))THEN
 
 C         FIRST AND SECOND DERIVATIVES OF LN(TEMPERATURE) ALREADY STORED
@@ -2767,6 +2568,7 @@ C         FIRST AND SECOND DERIVATIVES OF LN(TEMPERATURE) ALREADY STORED
 
                 STORE7(IC,JC,KC) = DIFMIX(IC,JC,KC)*YRHS(IC,JC,KC,ISPEC)
      +                            *TDRMIX(IC,JC,KC)
+C     +                          *TDRMIX(IC,JC,KC)*XMOLFR(ISPEC,IC,JC,KC)
   
               ENDDO
             ENDDO
@@ -2914,8 +2716,13 @@ C         BC IN Z: DIFFUSIVE TERMS (HEAT FLUX) ZERO ON END POINTS
               ENDDO
             ENDDO
           ENDDO
-
-C         ====================================================================
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                                              WTMP = MIXTURE H
+C                                                              STORE7 = RHO D Y
+C         =====================================================================
 
 C         Y-EQUATION: DIFFUSIVE TERMS
 C         ---------------------------
@@ -2927,21 +2734,12 @@ C         WALL BC: ENTHALPY DIFFUSION TERMS
               DO JC = JSTAL,JSTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(ISTAL,JC,KC)*TD1X(ISTAL,JC,KC)
-                FORNOW1 = STORE7(ISTAL+1,JC,KC)*TD1X(ISTAL+1,JC,KC)
-                FORNOW2 = STORE7(ISTAL+2,JC,KC)*TD1X(ISTAL+2,JC,KC)
-                FORNOW3 = STORE7(ISTAL+3,JC,KC)*TD1X(ISTAL+3,JC,KC)
-                FORNOW4 = STORE7(ISTAL+4,JC,KC)*TD1X(ISTAL+4,JC,KC)
-                FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                   (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                   (1.0/4.0)*FORNOW4)/DELTAX
-C                DO IC = ISTAP1,ISTOW
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCXL(IC-1)*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
-C
-C                ENDDO
+                DO IC = ISTAP1,ISTOW
+
+                  FORNOW = FORNOW
+     +                + ACBCXL(IC-1)*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
+
+                ENDDO
                 RATE(ISTAL,JC,KC,ISPEC) = RATE(ISTAL,JC,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(ISTAL,JC,KC) = VTMP(ISTAL,JC,KC) + FORNOW
@@ -2957,21 +2755,12 @@ C                ENDDO
               DO JC = JSTAL,JSTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(ISTOL,JC,KC)*TD1X(ISTOL,JC,KC)
-                FORNOW1 = STORE7(ISTOL-1,JC,KC)*TD1X(ISTOL-1,JC,KC)
-                FORNOW2 = STORE7(ISTOL-2,JC,KC)*TD1X(ISTOL-2,JC,KC)
-                FORNOW3 = STORE7(ISTOL-3,JC,KC)*TD1X(ISTOL-3,JC,KC)
-                FORNOW4 = STORE7(ISTOL-4,JC,KC)*TD1X(ISTOL-4,JC,KC)
-                FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                   (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                   (1.0/4.0)*FORNOW4)/DELTAX
-C                DO IC = ISTAW,ISTOM1
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
-C
-C                ENDDO
+                DO IC = ISTAW,ISTOM1
+
+                  FORNOW = FORNOW
+     +                + ACBCXR(ISTOL-IC)*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
+
+                ENDDO
                 RATE(ISTOL,JC,KC,ISPEC) = RATE(ISTOL,JC,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(ISTOL,JC,KC) = VTMP(ISTOL,JC,KC) + FORNOW
@@ -2987,21 +2776,12 @@ C                ENDDO
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JSTAL,KC)*TD1Y(IC,JSTAL,KC)
-                FORNOW1 = STORE7(IC,JSTAL+1,KC)*TD1Y(IC,JSTAL+1,KC)
-                FORNOW2 = STORE7(IC,JSTAL+2,KC)*TD1Y(IC,JSTAL+2,KC)
-                FORNOW3 = STORE7(IC,JSTAL+3,KC)*TD1Y(IC,JSTAL+3,KC)
-                FORNOW4 = STORE7(IC,JSTAL+4,KC)*TD1Y(IC,JSTAL+4,KC)
-                FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                   (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                   (1.0/4.0)*FORNOW4)/DELTAY
-C                DO JC = JSTAP1,JSTOW
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCYL(JC-1)*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
-C
-C                ENDDO
+                DO JC = JSTAP1,JSTOW
+
+                  FORNOW = FORNOW
+     +                + ACBCYL(JC-1)*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JSTAL,KC,ISPEC) = RATE(IC,JSTAL,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JSTAL,KC) = VTMP(IC,JSTAL,KC) + FORNOW
@@ -3017,21 +2797,12 @@ C                ENDDO
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JSTOL,KC)*TD1Y(IC,JSTOL,KC)
-                FORNOW1 = STORE7(IC,JSTOL-1,KC)*TD1Y(IC,JSTOL-1,KC)
-                FORNOW2 = STORE7(IC,JSTOL-2,KC)*TD1Y(IC,JSTOL-2,KC)
-                FORNOW3 = STORE7(IC,JSTOL-3,KC)*TD1Y(IC,JSTOL-3,KC)
-                FORNOW4 = STORE7(IC,JSTOL-4,KC)*TD1Y(IC,JSTOL-4,KC)
-                FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                   (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                   (1.0/4.0)*FORNOW4)/DELTAY
-C                DO JC = JSTAW,JSTOM1
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
-C
-C                ENDDO
+                DO JC = JSTAW,JSTOM1
+
+                  FORNOW = FORNOW
+     +                + ACBCYR(JSTOL-JC)*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JSTOL,KC,ISPEC) = RATE(IC,JSTOL,KC,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JSTOL,KC) = VTMP(IC,JSTOL,KC) + FORNOW
@@ -3047,21 +2818,12 @@ C                ENDDO
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JC,KSTAL)*TD1Z(IC,JC,KSTAL)
-                FORNOW1 = STORE7(IC,JC,KSTAL+1)*TD1Z(IC,JC,KSTAL+1)
-                FORNOW2 = STORE7(IC,JC,KSTAL+2)*TD1Z(IC,JC,KSTAL+2)
-                FORNOW3 = STORE7(IC,JC,KSTAL+3)*TD1Z(IC,JC,KSTAL+3)
-                FORNOW4 = STORE7(IC,JC,KSTAL+4)*TD1Z(IC,JC,KSTAL+4)
-                FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                   (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                   (1.0/4.0)*FORNOW4)/DELTAZ
-C                DO KC = KSTAP1,KSTOW
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCZL(KC-1)*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
-C
-C                ENDDO
+                DO KC = KSTAP1,KSTOW
+
+                  FORNOW = FORNOW
+     +                + ACBCZL(KC-1)*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JC,KSTAL,ISPEC) = RATE(IC,JC,KSTAL,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JC,KSTAL) = VTMP(IC,JC,KSTAL) + FORNOW
@@ -3077,21 +2839,12 @@ C                ENDDO
               DO IC = ISTAL,ISTOL
 
                 FORNOW = ZERO
-C               NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                FORNOW0 = STORE7(IC,JC,KSTOL)*TD1Z(IC,JC,KSTOL)
-                FORNOW1 = STORE7(IC,JC,KSTOL-1)*TD1Z(IC,JC,KSTOL-1)
-                FORNOW2 = STORE7(IC,JC,KSTOL-2)*TD1Z(IC,JC,KSTOL-2)
-                FORNOW3 = STORE7(IC,JC,KSTOL-3)*TD1Z(IC,JC,KSTOL-3)
-                FORNOW4 = STORE7(IC,JC,KSTOL-4)*TD1Z(IC,JC,KSTOL-4)
-                FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                   (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                   (1.0/4.0)*FORNOW4)/DELTAZ
-C                DO KC = KSTAW,KSTOM1
-C
-C                  FORNOW = FORNOW
-C     +                + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
-C
-C                ENDDO
+                DO KC = KSTAW,KSTOM1
+
+                  FORNOW = FORNOW
+     +                + ACBCZR(KSTOL-KC)*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
+
+                ENDDO
                 RATE(IC,JC,KSTOL,ISPEC) = RATE(IC,JC,KSTOL,ISPEC)
      +                                  + FORNOW
                 VTMP(IC,JC,KSTOL) = VTMP(IC,JC,KSTOL) + FORNOW
@@ -3112,44 +2865,14 @@ C           WALL BC: ADIABATIC WALL
               DO KC = KSTAL,KSTOL
                 DO JC = JSTAL,JSTOL
 
-C                  COMBO2 = TRUN(ISTAL,JC,KC)*TDRMIX(ISTAL,JC,KC)
-C                  COMBO2 = COMBO2*STORE7(ISTAL,JC,KC)*TD1X(ISTAL,JC,KC)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(ISTAL,JC,KC)*TDRMIX(ISTAL,JC,KC)
-                  FORNOW0 = COMBO1*STORE7(ISTAL,JC,KC)*TD1X(ISTAL,JC,KC)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  FORNOW = ZERO
+                  DO IC = ISTAP1,ISTOW
 
-                  COMBO1 = TRUN(ISTAL+1,JC,KC)*TDRMIX(ISTAL+1,JC,KC)
-                  FORNOW1 = COMBO1*STORE7(ISTAL+1,JC,KC)
-     +                     *TD1X(ISTAL+1,JC,KC)
-C                  FOWNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                  FORNOW = FORNOW
+     +             + ACBCXL(IC-1)*COMBO1*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
 
-                  COMBO1 = TRUN(ISTAL+2,JC,KC)*TDRMIX(ISTAL+2,JC,KC)
-                  FORNOW2 = COMBO1*STORE7(ISTAL+2,JC,KC)
-     +                     *TD1X(ISTAL+2,JC,KC)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(ISTAL+3,JC,KC)*TDRMIX(ISTAL+3,JC,KC)
-                  FORNOW3 = COMBO1*STORE7(ISTAL+3,JC,KC)
-     +                     *TD1X(ISTAL+3,JC,KC)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(ISTAL+4,JC,KC)*TDRMIX(ISTAL+4,JC,KC)
-                  FORNOW4 = COMBO1*STORE7(ISTAL+4,JC,KC)
-     +                     *TD1X(ISTAL+4,JC,KC)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-                  FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                     (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                     (1.0/4.0)*FORNOW4)/DELTAX
-C                  FORNOW = ZERO
-C                  DO IC = ISTAP1,ISTOW
-C
-C                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                  FORNOW = FORNOW
-C     +             + ACBCXL(IC-1)*COMBO1*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(ISTAL,JC,KC) = ERHS(ISTAL,JC,KC)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3160,44 +2883,14 @@ C                  ENDDO
               DO KC = KSTAL,KSTOL
                 DO JC = JSTAL,JSTOL
 
-C                  COMBO2 = TRUN(ISTOL,JC,KC)*TDRMIX(ISTOL,JC,KC)
-C                  COMBO2 = COMBO2*STORE7(ISTOL,JC,KC)*TD1X(ISTOL,JC,KC)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(ISTOL,JC,KC)*TDRMIX(ISTOL,JC,KC)
-                  FORNOW0 = COMBO1*STORE7(ISTOL,JC,KC)*TD1X(ISTOL,JC,KC)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  FORNOW = ZERO
+                  DO IC = ISTAW,ISTOM1
 
-                  COMBO1 = TRUN(ISTOL-1,JC,KC)*TDRMIX(ISTOL-1,JC,KC)
-                  FORNOW1 = COMBO1*STORE7(ISTOL-1,JC,KC)
-     +                     *TD1X(ISTOL-1,JC,KC)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                  FORNOW = FORNOW
+     +        + ACBCXR(ISTOL-IC)*COMBO1*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
 
-                  COMBO1 = TRUN(ISTOL-2,JC,KC)*TDRMIX(ISTOL-2,JC,KC)
-                  FORNOW2 = COMBO1*STORE7(ISTOL-2,JC,KC)
-     +                     *TD1X(ISTOL-2,JC,KC)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(ISTOL-3,JC,KC)*TDRMIX(ISTOL-3,JC,KC)
-                  FORNOW3 = COMBO1*STORE7(ISTOL-3,JC,KC)
-     +                     *TD1X(ISTOL-3,JC,KC)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(ISTOL-4,JC,KC)*TDRMIX(ISTOL-4,JC,KC)
-                  FORNOW4 = COMBO1*STORE7(ISTOL-4,JC,KC)
-     +                     *TD1X(ISTOL-4,JC,KC)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-                  FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                     (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                     (1.0/4.0)*FORNOW4)/DELTAX
-C                  FORNOW = ZERO
-C                  DO IC = ISTAW,ISTOM1
-C
-C                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                  FORNOW = FORNOW
-C     +        + ACBCXR(ISTOL-IC)*COMBO1*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(ISTOL,JC,KC) = ERHS(ISTOL,JC,KC)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3208,45 +2901,14 @@ C                  ENDDO
               DO KC = KSTAL,KSTOL
                 DO IC = ISTAL,ISTOL
 
-C                  COMBO2 = TRUN(IC,JSTAL,KC)*TDRMIX(IC,JSTAL,KC)
-C                  COMBO2 = COMBO2*STORE7(IC,JSTAL,KC)*TD1Y(IC,JSTAL,KC)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(IC,JSTAL,KC)*TDRMIX(IC,JSTAL,KC)
-                  FORNOW0 = COMBO1*STORE7(IC,JSTAL,KC)*TD1Y(IC,JSTAL,KC)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  FORNOW = ZERO
+                  DO JC = JSTAP1,JSTOW
 
-                  COMBO1 = TRUN(IC,JSTAL+1,KC)*TDRMIX(IC,JSTAL+1,KC)
-                  FORNOW1 = COMBO1*STORE7(IC,JSTAL+1,KC)
-     +                     *TD1Y(IC,JSTAL+1,KC)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                  FORNOW = FORNOW
+     +             + ACBCYL(JC-1)*COMBO1*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
 
-                  COMBO1 = TRUN(IC,JSTAL+2,KC)*TDRMIX(IC,JSTAL+2,KC)
-                  FORNOW2 = COMBO1*STORE7(IC,JSTAL+2,KC)
-     +                     *TD1Y(IC,JSTAL+2,KC)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(IC,JSTAL+3,KC)*TDRMIX(IC,JSTAL+3,KC)
-                  FORNOW3 = COMBO1*STORE7(IC,JSTAL+3,KC)
-     +                     *TD1Y(IC,JSTAL+3,KC)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(IC,JSTAL+4,KC)*TDRMIX(IC,JSTAL+4,KC)
-                  FORNOW4 = COMBO1*STORE7(IC,JSTAL+4,KC)
-     +                     *TD1Y(IC,JSTAL+4,KC)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-
-                  FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                     (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                     (1.0/4.0)*FORNOW4)/DELTAY
-C                  FORNOW = ZERO
-C                  DO JC = JSTAP1,JSTOW
-C
-C                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                  FORNOW = FORNOW
-C     +             + ACBCYL(JC-1)*COMBO1*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(IC,JSTAL,KC) = ERHS(IC,JSTAL,KC)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3257,44 +2919,14 @@ C                  ENDDO
               DO KC = KSTAL,KSTOL
                 DO IC = ISTAL,ISTOL
 
-C                  COMBO2 = TRUN(IC,JSTOL,KC)*TDRMIX(IC,JSTOL,KC)
-C                  COMBO2 = COMBO2*STORE7(IC,JSTOL,KC)*TD1Y(IC,JSTOL,KC)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(IC,JSTOL,KC)*TDRMIX(IC,JSTOL,KC)
-                  FORNOW0 = COMBO1*STORE7(IC,JSTOL,KC)*TD1X(IC,JSTOL,KC)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  FORNOW = ZERO
+                  DO JC = JSTAW,JSTOM1
 
-                  COMBO1 = TRUN(IC,JSTOL-1,KC)*TDRMIX(IC,JSTOL-1,KC)
-                  FORNOW1 = COMBO1*STORE7(IC,JSTOL-1,KC)
-     +                     *TD1X(IC,JSTOL-1,KC)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                  FORNOW = FORNOW
+     +        + ACBCYR(JSTOL-JC)*COMBO1*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
 
-                  COMBO1 = TRUN(IC,JSTOL-2,KC)*TDRMIX(IC,JSTOL-2,KC)
-                  FORNOW2 = COMBO1*STORE7(IC,JSTOL-2,KC)
-     +                     *TD1X(IC,JSTOL-2,KC)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(IC,JSTOL-3,KC)*TDRMIX(IC,JSTOL-3,KC)
-                  FORNOW3 = COMBO1*STORE7(IC,JSTOL-3,KC)
-     +                     *TD1X(IC,JSTOL-3,KC)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(IC,JSTOL-4,KC)*TDRMIX(IC,JSTOL-4,KC)
-                  FORNOW4 = COMBO1*STORE7(IC,JSTOL-4,KC)
-     +                     *TD1X(IC,JSTOL-4,KC)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-                  FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                     (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                     (1.0/4.0)*FORNOW4)/DELTAY
-C                  FORNOW = ZERO
-C                  DO JC = JSTAW,JSTOM1
-C
-C                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                  FORNOW = FORNOW
-C     +        + ACBCYR(JSTOL-JC)*COMBO1*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(IC,JSTOL,KC) = ERHS(IC,JSTOL,KC)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3305,45 +2937,14 @@ C                  ENDDO
               DO JC = JSTAL,JSTOL
                 DO IC = ISTAL,ISTOL
 
-C                  COMBO2 = TRUN(IC,JC,KSTAL)*TDRMIX(IC,JC,KSTAL)
-C                  COMBO2 = COMBO2*STORE7(IC,JC,KSTAL)*TD1Z(IC,JC,KSTAL)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(IC,JC,KSTAL)*TDRMIX(IC,JC,KSTAL)
-                  FORNOW0 = COMBO1*STORE7(IC,JC,KSTAL)*TD1Y(IC,JC,KSTAL)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  FORNOW = ZERO
+                  DO KC = KSTAP1,KSTOW
 
-                  COMBO1 = TRUN(IC,JC,KSTAL+1)*TDRMIX(IC,JC,KSTAL+1)
-                  FORNOW1 = COMBO1*STORE7(IC,JC,KSTAL+1)
-     +                     *TD1Y(IC,JC,KSTAL+1)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                  FORNOW = FORNOW
+     +             + ACBCZL(KC-1)*COMBO1*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
 
-                  COMBO1 = TRUN(IC,JC,KSTAL+2)*TDRMIX(IC,JC,KSTAL+2)
-                  FORNOW2 = COMBO1*STORE7(IC,JC,KSTAL+2)
-     +                     *TD1Y(IC,JC,KSTAL+2)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(IC,JC,KSTAL+3)*TDRMIX(IC,JC,KSTAL+3)
-                  FORNOW3 = COMBO1*STORE7(IC,JC,KSTAL+3)
-     +                     *TD1Y(IC,JC,KSTAL+3)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(IC,JC,KSTAL+4)*TDRMIX(IC,JC,KSTAL+4)
-                  FORNOW4 = COMBO1*STORE7(IC,JC,KSTAL+4)
-     +                     *TD1Y(IC,JC,KSTAL+4)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-
-                  FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                     (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                     (1.0/4.0)*FORNOW4)/DELTAZ
-C                  FORNOW = ZERO
-C                  DO KC = KSTAP1,KSTOW
-C
-C                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                  FORNOW = FORNOW
-C     +             + ACBCZL(KC-1)*COMBO1*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(IC,JC,KSTAL) = ERHS(IC,JC,KSTAL)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3354,44 +2955,14 @@ C                  ENDDO
               DO JC = JSTAL,JSTOL
                 DO IC = ISTAL,ISTOL
 
-C                  COMBO2 = TRUN(IC,JC,KSTOL)*TDRMIX(IC,JC,KSTOL)
-C                  COMBO2 = COMBO2*STORE7(IC,JC,KSTOL)*TD1Z(IC,JC,KSTOL)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(IC,JC,KSTOL)*TDRMIX(IC,JC,KSTOL)
-                  FORNOW0 = COMBO1*STORE7(IC,JC,KSTOL)*TD1X(IC,JC,KSTOL)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  FORNOW = ZERO
+                  DO KC = KSTAW,KSTOM1
 
-                  COMBO1 = TRUN(IC,JC,KSTOL-1)*TDRMIX(IC,JC,KSTOL-1)
-                  FORNOW1 = COMBO1*STORE7(IC,JC,KSTOL-1)
-     +                     *TD1X(IC,JC,KSTOL-1)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                  FORNOW = FORNOW
+     +        + ACBCZR(KSTOL-KC)*COMBO1*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
 
-                  COMBO1 = TRUN(IC,JC,KSTOL-2)*TDRMIX(IC,JC,KSTOL-2)
-                  FORNOW2 = COMBO1*STORE7(IC,JC,KSTOL-2)
-     +                     *TD1X(IC,JC,KSTOL-2)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(IC,JC,KSTOL-3)*TDRMIX(IC,JC,KSTOL-3)
-                  FORNOW3 = COMBO1*STORE7(IC,JC,KSTOL-3)
-     +                     *TD1X(IC,JC,KSTOL-3)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(IC,JC,KSTOL-4)*TDRMIX(IC,JC,KSTOL-4)
-                  FORNOW4 = COMBO1*STORE7(IC,JC,KSTOL-4)
-     +                     *TD1X(IC,JC,KSTOL-4)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-                  FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                     (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                     (1.0/4.0)*FORNOW4)/DELTAZ
-C                  FORNOW = ZERO
-C                  DO KC = KSTAW,KSTOM1
-C
-C                  COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                  FORNOW = FORNOW
-C     +        + ACBCZR(KSTOL-KC)*COMBO1*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(IC,JC,KSTOL) = ERHS(IC,JC,KSTOL)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3405,44 +2976,17 @@ C           WALL BC: ISOTHERMAL WALL
               DO KC = KSTAL,KSTOL
                 DO JC = JSTAL,JSTOL
 
-C                  COMBO2 = TRUN(ISTAL,JC,KC)*TDRMIX(ISTAL,JC,KC)
-C                  COMBO2 = COMBO2*STORE7(ISTAL,JC,KC)*TD1X(ISTAL,JC,KC)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(ISTAL,JC,KC)*TDRMIX(ISTAL,JC,KC)
-                  FORNOW0 = COMBO1*STORE7(ISTAL,JC,KC)*TD1X(ISTAL,JC,KC)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  COMBO2 = TRUN(ISTAL,JC,KC)*TDRMIX(ISTAL,JC,KC)
+                  COMBO2 = COMBO2*STORE7(ISTAL,JC,KC)*TD1X(ISTAL,JC,KC)
+                  FORNOW = ZERO
+                  DO IC = ISTAP1,ISTOW
 
-                  COMBO1 = TRUN(ISTAL+1,JC,KC)*TDRMIX(ISTAL+1,JC,KC)
-                  FORNOW1 = COMBO1*STORE7(ISTAL+1,JC,KC)
-     +                     *TD1X(ISTAL+1,JC,KC)
-C                  FOWNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
+                    FORNOW = FORNOW
+     +                     + ACBCXL(IC-1)*RGSPEC(ISPEC)*(COMBO1-COMBO2)
 
-                  COMBO1 = TRUN(ISTAL+2,JC,KC)*TDRMIX(ISTAL+2,JC,KC)
-                  FORNOW2 = COMBO1*STORE7(ISTAL+2,JC,KC)
-     +                     *TD1X(ISTAL+2,JC,KC)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(ISTAL+3,JC,KC)*TDRMIX(ISTAL+3,JC,KC)
-                  FORNOW3 = COMBO1*STORE7(ISTAL+3,JC,KC)
-     +                     *TD1X(ISTAL+3,JC,KC)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(ISTAL+4,JC,KC)*TDRMIX(ISTAL+4,JC,KC)
-                  FORNOW4 = COMBO1*STORE7(ISTAL+4,JC,KC)
-     +                     *TD1X(ISTAL+4,JC,KC)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-                  FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                     (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                     (1.0/4.0)*FORNOW4)/DELTAX
-C                  DO IC = ISTAP1,ISTOW
-C
-C                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
-C                    FORNOW = FORNOW
-C     +                     + ACBCXL(IC-1)*RGSPEC(ISPEC)*(COMBO1-COMBO2)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(ISTAL,JC,KC) = ERHS(ISTAL,JC,KC)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3453,44 +2997,17 @@ C                  ENDDO
               DO KC = KSTAL,KSTOL
                 DO JC = JSTAL,JSTOL
 
-C                  COMBO2 = TRUN(ISTOL,JC,KC)*TDRMIX(ISTOL,JC,KC)
-C                  COMBO2 = COMBO2*STORE7(ISTOL,JC,KC)*TD1X(ISTOL,JC,KC)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(ISTOL,JC,KC)*TDRMIX(ISTOL,JC,KC)
-                  FORNOW0 = COMBO1*STORE7(ISTOL,JC,KC)*TD1X(ISTOL,JC,KC)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  COMBO2 = TRUN(ISTOL,JC,KC)*TDRMIX(ISTOL,JC,KC)
+                  COMBO2 = COMBO2*STORE7(ISTOL,JC,KC)*TD1X(ISTOL,JC,KC)
+                  FORNOW = ZERO
+                  DO IC = ISTAW,ISTOM1
 
-                  COMBO1 = TRUN(ISTOL-1,JC,KC)*TDRMIX(ISTOL-1,JC,KC)
-                  FORNOW1 = COMBO1*STORE7(ISTOL-1,JC,KC)
-     +                     *TD1X(ISTOL-1,JC,KC)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
+                    FORNOW = FORNOW
+     +                 + ACBCXR(ISTOL-IC)*RGSPEC(ISPEC)*(COMBO2-COMBO1)
 
-                  COMBO1 = TRUN(ISTOL-2,JC,KC)*TDRMIX(ISTOL-2,JC,KC)
-                  FORNOW2 = COMBO1*STORE7(ISTOL-2,JC,KC)
-     +                     *TD1X(ISTOL-2,JC,KC)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(ISTOL-3,JC,KC)*TDRMIX(ISTOL-3,JC,KC)
-                  FORNOW3 = COMBO1*STORE7(ISTOL-3,JC,KC)
-     +                     *TD1X(ISTOL-3,JC,KC)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(ISTOL-4,JC,KC)*TDRMIX(ISTOL-4,JC,KC)
-                  FORNOW4 = COMBO1*STORE7(ISTOL-4,JC,KC)
-     +                     *TD1X(ISTOL-4,JC,KC)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-                  FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                     (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                     (1.0/4.0)*FORNOW4)/DELTAX
-C                  DO IC = ISTAW,ISTOM1
-C
-C                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1X(IC,JC,KC)
-C                    FORNOW = FORNOW
-C     +                 + ACBCXR(ISTOL-IC)*RGSPEC(ISPEC)*(COMBO2-COMBO1)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(ISTOL,JC,KC) = ERHS(ISTOL,JC,KC)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3501,45 +3018,17 @@ C                  ENDDO
               DO KC = KSTAL,KSTOL
                 DO IC = ISTAL,ISTOL
 
-C                  COMBO2 = TRUN(IC,JSTAL,KC)*TDRMIX(IC,JSTAL,KC)
-C                  COMBO2 = COMBO2*STORE7(IC,JSTAL,KC)*TD1Y(IC,JSTAL,KC)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(IC,JSTAL,KC)*TDRMIX(IC,JSTAL,KC)
-                  FORNOW0 = COMBO1*STORE7(IC,JSTAL,KC)*TD1Y(IC,JSTAL,KC)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  COMBO2 = TRUN(IC,JSTAL,KC)*TDRMIX(IC,JSTAL,KC)
+                  COMBO2 = COMBO2*STORE7(IC,JSTAL,KC)*TD1Y(IC,JSTAL,KC)
+                  FORNOW = ZERO
+                  DO JC = JSTAP1,JSTOW
 
-                  COMBO1 = TRUN(IC,JSTAL+1,KC)*TDRMIX(IC,JSTAL+1,KC)
-                  FORNOW1 = COMBO1*STORE7(IC,JSTAL+1,KC)
-     +                     *TD1Y(IC,JSTAL+1,KC)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
+                    FORNOW = FORNOW
+     +                     + ACBCYL(JC-1)*RGSPEC(ISPEC)*(COMBO1-COMBO2)
 
-                  COMBO1 = TRUN(IC,JSTAL+2,KC)*TDRMIX(IC,JSTAL+2,KC)
-                  FORNOW2 = COMBO1*STORE7(IC,JSTAL+2,KC)
-     +                     *TD1Y(IC,JSTAL+2,KC)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(IC,JSTAL+3,KC)*TDRMIX(IC,JSTAL+3,KC)
-                  FORNOW3 = COMBO1*STORE7(IC,JSTAL+3,KC)
-     +                     *TD1Y(IC,JSTAL+3,KC)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(IC,JSTAL+4,KC)*TDRMIX(IC,JSTAL+4,KC)
-                  FORNOW4 = COMBO1*STORE7(IC,JSTAL+4,KC)
-     +                     *TD1Y(IC,JSTAL+4,KC)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-
-                  FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                     (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                     (1.0/4.0)*FORNOW4)/DELTAY
-C                  DO JC = JSTAP1,JSTOW
-C
-C                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
-C                    FORNOW = FORNOW
-C     +                     + ACBCYL(JC-1)*RGSPEC(ISPEC)*(COMBO1-COMBO2)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(IC,JSTAL,KC) = ERHS(IC,JSTAL,KC)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3550,44 +3039,17 @@ C                  ENDDO
               DO KC = KSTAL,KSTOL
                 DO IC = ISTAL,ISTOL
 
-C                  COMBO2 = TRUN(IC,JSTOL,KC)*TDRMIX(IC,JSTOL,KC)
-C                  COMBO2 = COMBO2*STORE7(IC,JSTOL,KC)*TD1Y(IC,JSTOL,KC)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(IC,JSTOL,KC)*TDRMIX(IC,JSTOL,KC)
-                  FORNOW0 = COMBO1*STORE7(IC,JSTOL,KC)*TD1X(IC,JSTOL,KC)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  COMBO2 = TRUN(IC,JSTOL,KC)*TDRMIX(IC,JSTOL,KC)
+                  COMBO2 = COMBO2*STORE7(IC,JSTOL,KC)*TD1Y(IC,JSTOL,KC)
+                  FORNOW = ZERO
+                  DO JC = JSTAW,JSTOM1
 
-                  COMBO1 = TRUN(IC,JSTOL-1,KC)*TDRMIX(IC,JSTOL-1,KC)
-                  FORNOW1 = COMBO1*STORE7(IC,JSTOL-1,KC)
-     +                     *TD1X(IC,JSTOL-1,KC)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
+                    FORNOW = FORNOW
+     +                 + ACBCYR(JSTOL-JC)*RGSPEC(ISPEC)*(COMBO2-COMBO1)
 
-                  COMBO1 = TRUN(IC,JSTOL-2,KC)*TDRMIX(IC,JSTOL-2,KC)
-                  FORNOW2 = COMBO1*STORE7(IC,JSTOL-2,KC)
-     +                     *TD1X(IC,JSTOL-2,KC)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(IC,JSTOL-3,KC)*TDRMIX(IC,JSTOL-3,KC)
-                  FORNOW3 = COMBO1*STORE7(IC,JSTOL-3,KC)
-     +                     *TD1X(IC,JSTOL-3,KC)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(IC,JSTOL-4,KC)*TDRMIX(IC,JSTOL-4,KC)
-                  FORNOW4 = COMBO1*STORE7(IC,JSTOL-4,KC)
-     +                     *TD1X(IC,JSTOL-4,KC)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-                  FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                     (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                     (1.0/4.0)*FORNOW4)/DELTAY
-C                  DO JC = JSTAW,JSTOM1
-C
-C                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1Y(IC,JC,KC)
-C                    FORNOW = FORNOW
-C     +                 + ACBCYR(JSTOL-JC)*RGSPEC(ISPEC)*(COMBO2-COMBO1)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(IC,JSTOL,KC) = ERHS(IC,JSTOL,KC)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3598,45 +3060,17 @@ C                  ENDDO
               DO JC = JSTAL,JSTOL
                 DO IC = ISTAL,ISTOL
 
-C                  COMBO2 = TRUN(IC,JC,KSTAL)*TDRMIX(IC,JC,KSTAL)
-C                  COMBO2 = COMBO2*STORE7(IC,JC,KSTAL)*TD1Z(IC,JC,KSTAL)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(IC,JC,KSTAL)*TDRMIX(IC,JC,KSTAL)
-                  FORNOW0 = COMBO1*STORE7(IC,JC,KSTAL)*TD1Y(IC,JC,KSTAL)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  COMBO2 = TRUN(IC,JC,KSTAL)*TDRMIX(IC,JC,KSTAL)
+                  COMBO2 = COMBO2*STORE7(IC,JC,KSTAL)*TD1Z(IC,JC,KSTAL)
+                  FORNOW = ZERO
+                  DO KC = KSTAP1,KSTOW
 
-                  COMBO1 = TRUN(IC,JC,KSTAL+1)*TDRMIX(IC,JC,KSTAL+1)
-                  FORNOW1 = COMBO1*STORE7(IC,JC,KSTAL+1)
-     +                     *TD1Y(IC,JC,KSTAL+1)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
+                    FORNOW = FORNOW
+     +                     + ACBCZL(KC-1)*RGSPEC(ISPEC)*(COMBO1-COMBO2)
 
-                  COMBO1 = TRUN(IC,JC,KSTAL+2)*TDRMIX(IC,JC,KSTAL+2)
-                  FORNOW2 = COMBO1*STORE7(IC,JC,KSTAL+2)
-     +                     *TD1Y(IC,JC,KSTAL+2)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(IC,JC,KSTAL+3)*TDRMIX(IC,JC,KSTAL+3)
-                  FORNOW3 = COMBO1*STORE7(IC,JC,KSTAL+3)
-     +                     *TD1Y(IC,JC,KSTAL+3)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(IC,JC,KSTAL+4)*TDRMIX(IC,JC,KSTAL+4)
-                  FORNOW4 = COMBO1*STORE7(IC,JC,KSTAL+4)
-     +                     *TD1Y(IC,JC,KSTAL+4)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-
-                  FORNOW = ((-25.0/12.0)*FORNOW0+(4.0)*FORNOW1-
-     +                     (3.0)*FORNOW2+(4.0/3.0)*FORNOW3-
-     +                     (1.0/4.0)*FORNOW4)/DELTAZ
-C                  DO KC = KSTAP1,KSTOW
-C
-C                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
-C                    FORNOW = FORNOW
-C     +                     + ACBCZL(KC-1)*RGSPEC(ISPEC)*(COMBO1-COMBO2)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(IC,JC,KSTAL) = ERHS(IC,JC,KSTAL)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3647,44 +3081,17 @@ C                  ENDDO
               DO JC = JSTAL,JSTOL
                 DO IC = ISTAL,ISTOL
 
-C                  COMBO2 = TRUN(IC,JC,KSTOL)*TDRMIX(IC,JC,KSTOL)
-C                  COMBO2 = COMBO2*STORE7(IC,JC,KSTOL)*TD1Z(IC,JC,KSTOL)
-C                  FORNOW = ZERO
-C                 NC&VM: CALCULATING DERIVATIVE AT THE WALL
-                  COMBO1 = TRUN(IC,JC,KSTOL)*TDRMIX(IC,JC,KSTOL)
-                  FORNOW0 = COMBO1*STORE7(IC,JC,KSTOL)*TD1X(IC,JC,KSTOL)
-C                  FORNOW0 = RGSPEC(ISPEC)*(FORNOW0-COMBO2)
+                  COMBO2 = TRUN(IC,JC,KSTOL)*TDRMIX(IC,JC,KSTOL)
+                  COMBO2 = COMBO2*STORE7(IC,JC,KSTOL)*TD1Z(IC,JC,KSTOL)
+                  FORNOW = ZERO
+                  DO KC = KSTAW,KSTOM1
 
-                  COMBO1 = TRUN(IC,JC,KSTOL-1)*TDRMIX(IC,JC,KSTOL-1)
-                  FORNOW1 = COMBO1*STORE7(IC,JC,KSTOL-1)
-     +                     *TD1X(IC,JC,KSTOL-1)
-C                  FORNOW1 = RGSPEC(ISPEC)*(FORNOW1-COMBO2)
+                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
+                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
+                    FORNOW = FORNOW
+     +                 + ACBCZR(KSTOL-KC)*RGSPEC(ISPEC)*(COMBO2-COMBO1)
 
-                  COMBO1 = TRUN(IC,JC,KSTOL-2)*TDRMIX(IC,JC,KSTOL-2)
-                  FORNOW2 = COMBO1*STORE7(IC,JC,KSTOL-2)
-     +                     *TD1X(IC,JC,KSTOL-2)
-C                  FORNOW2 = RGSPEC(ISPEC)*(FORNOW2-COMBO2)
-
-                  COMBO1 = TRUN(IC,JC,KSTOL-3)*TDRMIX(IC,JC,KSTOL-3)
-                  FORNOW3 = COMBO1*STORE7(IC,JC,KSTOL-3)
-     +                     *TD1X(IC,JC,KSTOL-3)
-C                  FORNOW3 = RGSPEC(ISPEC)*(FORNOW3-COMBO2)
-
-                  COMBO1 = TRUN(IC,JC,KSTOL-4)*TDRMIX(IC,JC,KSTOL-4)
-                  FORNOW4 = COMBO1*STORE7(IC,JC,KSTOL-4)
-     +                     *TD1X(IC,JC,KSTOL-4)
-C                  FORNOW4 = RGSPEC(ISPEC)*(FORNOW4-COMBO2)
-                  FORNOW = ((25.0/12.0)*FORNOW0-(4.0)*FORNOW1+
-     +                     (3.0)*FORNOW2-(4.0/3.0)*FORNOW3+
-     +                     (1.0/4.0)*FORNOW4)/DELTAZ
-C                  DO KC = KSTAW,KSTOM1
-C
-C                    COMBO1 = TRUN(IC,JC,KC)*TDRMIX(IC,JC,KC)
-C                    COMBO1 = COMBO1*STORE7(IC,JC,KC)*TD1Z(IC,JC,KC)
-C                    FORNOW = FORNOW
-C     +                 + ACBCZR(KSTOL-KC)*RGSPEC(ISPEC)*(COMBO2-COMBO1)
-C
-C                  ENDDO
+                  ENDDO
                   ERHS(IC,JC,KSTOL) = ERHS(IC,JC,KSTOL)
      +                              + RGSPEC(ISPEC)*FORNOW
   
@@ -3692,8 +3099,13 @@ C                  ENDDO
               ENDDO
             ENDIF
           ENDIF
-
-C         ====================================================================
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              UTMP = SPECIES H
+C                                                           VTMP = DIV CORR VEL
+C                                                              WTMP = MIXTURE H
+C                                                              STORE7 = RHO D Y
+C         =====================================================================
 
 C         Y-EQUATION: DIFFUSIVE TERMS
 C         E-EQUATION: FURTHER HEAT FLUX TERMS
@@ -3756,10 +3168,11 @@ C         E EQUATION
           ENDDO
 
         ENDIF
-
+C                                                          TRANSP = MIX COND/CP
 C                                                         RATE = Y SOURCE TERMS
 C                                                           VTMP = DIV CORR VEL
 C                                                              WTMP = MIXTURE H
+C                                                              ALL STORES CLEAR
 C       =======================================================================
 
 C       ---------------------------------------------------------------- 
@@ -3841,29 +3254,32 @@ C     DIV RHO VCORR HMIX
           ENDDO
         ENDDO
       ENDDO
+C                                                          TRANSP = MIX COND/CP
 C                                                         RATE = Y SOURCE TERMS
-C                                                           VTMP = DIV CORR VEL
+C                                                              ALL STORES CLEAR
 C     =========================================================================
 
 C     MIXTURE AVERAGED TRANSPORT
 C     EVALUATE THE VISCOSITY
-
 C     RSC 17-APR-2013
-C     TRANSP CONTAINS LN(T)
-C     STORE VISCOSITY IN DIFMIX FOR NOW
+C     RSC 01-APR-2022
       IF(FLMAVT)THEN
 
+C       MIXTURE AVERAGED TRANSPORT
+C       VISCOSITY IS PARALLEL
+C       STORE VISCOSITY IN DIFMIX FOR NOW
         DO KC = KSTAB,KSTOB
           DO JC = JSTAB,JSTOB
             DO IC = ISTAB,ISTOB
 
 C             VISCOSITY FOR EACH SPECIES
-              DO ISPEC = 1, NSPEC
-                FORNOW = VISCCO(NCOVIS,ISPEC)
+              TRATIO = TRUN(IC,JC,KC)*TDIFGB
+              DO JSPEC = 1, NSPEC
+                FORNOW = VISCCO(NCOVIS,JSPEC)
                 DO ICP = NCOVM1,1,-1
-                  FORNOW = FORNOW*TRANSP(IC,JC,KC) + VISCCO(ICP,ISPEC)
+                  FORNOW = FORNOW*TRATIO + VISCCO(ICP,JSPEC)
                 ENDDO
-                CTRANS(ISPEC) = EXP(FORNOW)
+                CTRANS(JSPEC) = FORNOW
               ENDDO
 
 C             COMBINATION RULE FOR VISCOSITY
@@ -3874,12 +3290,10 @@ C             COMBINATION RULE FOR VISCOSITY
                   FORNOW = SQRT(CTRANS(ISPEC)/CTRANS(JSPEC))
                   FORNOW = ONE + FORNOW*WILKO2(JSPEC,ISPEC)
                   FORNOW = WILKO1(JSPEC,ISPEC)*FORNOW*FORNOW
-                  COMBO2 = COMBO2
-     +                   + YRHS(IC,JC,KC,JSPEC)*OVWMOL(JSPEC)*FORNOW
+                  COMBO2 = COMBO2 + XMOLFR(JSPEC,IC,JC,KC)*FORNOW
                 ENDDO
                 FORNOW = CTRANS(ISPEC)/COMBO2
-                COMBO1 = COMBO1 
-     +                 + YRHS(IC,JC,KC,ISPEC)*OVWMOL(ISPEC)*FORNOW
+                COMBO1 = COMBO1 + XMOLFR(ISPEC,IC,JC,KC)*FORNOW
 
               ENDDO
               DIFMIX(IC,JC,KC) = COMBO1
@@ -3889,7 +3303,9 @@ C             COMBINATION RULE FOR VISCOSITY
         ENDDO
 
       ENDIF
-
+C                                                          TRANSP = MIX COND/CP
+C                                                         RATE = Y SOURCE TERMS
+C                                                              ALL STORES CLEAR
 C     =========================================================================
 
 C     RUN THROUGH ALL SPECIES
@@ -3945,6 +3361,7 @@ C       STORE Y SOURCE TERMS IN YRHS
 
 C     RSC 08-AUG-2012 EVALUATE ALL SPECIES
 C     END OF RUN THROUGH ALL SPECIES
+C                                                          TRANSP = MIX COND/CP
 C                                                              ALL STORES CLEAR
 C     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -3961,18 +3378,24 @@ C     =========================================================================
 
 C     COLLECT DENSITY AND ITS GRADIENTS FOR BCs
 C     -----------------------------------------
+C     RSC 18-SEP-2022 BC TRANSVERSE TERMS
 
-C     X-DIRECTION: DRHODX
-      IF(FXLCNV.OR.FXRCNV)THEN
+CC     X-DIRECTION: DRHODX
+C      IF(FXLCNV.OR.FXRCNV)THEN
+      IF(FXLCNV.OR.FXRCNV.OR.FYLCNV.OR.FYRCNV.OR.FZLCNV.OR.FZRCNV)THEN
 
         CALL DFBYDX(DRHS,STORE1)
+        CALL DFBYDY(DRHS,STORE2)
+        CALL DFBYDZ(DRHS,STORE3)
 
         IF(FXLCNV)THEN
           DO KC = KSTAL,KSTOL
             DO JC = JSTAL,JSTOL
 
               STRDXL(JC,KC) = DRHS(ISTAL,JC,KC)
-              BCL2XL(JC,KC) = STORE1(ISTAL,JC,KC)
+              BCDXXL(JC,KC) = STORE1(ISTAL,JC,KC)
+              BCDYXL(JC,KC) = STORE2(ISTAL,JC,KC)
+              BCDZXL(JC,KC) = STORE3(ISTAL,JC,KC)
 
             ENDDO
           ENDDO
@@ -3982,25 +3405,31 @@ C     X-DIRECTION: DRHODX
             DO JC = JSTAL,JSTOL
 
               STRDXR(JC,KC) = DRHS(ISTOL,JC,KC)
-              BCL2XR(JC,KC) = STORE1(ISTOL,JC,KC)
+              BCDXXR(JC,KC) = STORE1(ISTOL,JC,KC)
+              BCDYXR(JC,KC) = STORE2(ISTOL,JC,KC)
+              BCDZXR(JC,KC) = STORE3(ISTOL,JC,KC)
 
             ENDDO
           ENDDO
         ENDIF
 
-      ENDIF
+C      ENDIF
 
-C     Y-DIRECTION: DRHODY
-      IF(FYLCNV.OR.FYRCNV)THEN
-
-        CALL DFBYDY(DRHS,STORE2)
+CC     Y-DIRECTION: DRHODY
+C      IF(FYLCNV.OR.FYRCNV)THEN
+C
+C        CALL DFBYDX(DRHS,STORE1)
+C        CALL DFBYDY(DRHS,STORE2)
+C        CALL DFBYDZ(DRHS,STORE3)
 
         IF(FYLCNV)THEN
           DO KC = KSTAL,KSTOL
             DO IC = ISTAL,ISTOL
 
               STRDYL(IC,KC) = DRHS(IC,JSTAL,KC)
-              BCL2YL(IC,KC) = STORE2(IC,JSTAL,KC)
+              BCDXYL(IC,KC) = STORE1(IC,JSTAL,KC)
+              BCDYYL(IC,KC) = STORE2(IC,JSTAL,KC)
+              BCDZYL(IC,KC) = STORE3(IC,JSTAL,KC)
 
             ENDDO
           ENDDO
@@ -4010,25 +3439,31 @@ C     Y-DIRECTION: DRHODY
             DO IC = ISTAL,ISTOL
 
               STRDYR(IC,KC) = DRHS(IC,JSTOL,KC)
-              BCL2YR(IC,KC) = STORE2(IC,JSTOL,KC)
+              BCDXYR(IC,KC) = STORE1(IC,JSTOL,KC)
+              BCDYYR(IC,KC) = STORE2(IC,JSTOL,KC)
+              BCDZYR(IC,KC) = STORE3(IC,JSTOL,KC)
 
             ENDDO
           ENDDO
         ENDIF
 
-      ENDIF
+c      ENDIF
 
-C     Z-DIRECTION: DRHODZ
-      IF(FZLCNV.OR.FZRCNV)THEN
-
-        CALL DFBYDZ(DRHS,STORE3)
+cC     Z-DIRECTION: DRHODZ
+c      IF(FZLCNV.OR.FZRCNV)THEN
+c
+c        CALL DFBYDX(DRHS,STORE1)
+c        CALL DFBYDY(DRHS,STORE2)
+c        CALL DFBYDZ(DRHS,STORE3)
 
         IF(FZLCNV)THEN
           DO JC = JSTAL,JSTOL
             DO IC = ISTAL,ISTOL
 
               STRDZL(IC,JC) = DRHS(IC,JC,KSTAL)
-              BCL2ZL(IC,JC) = STORE3(IC,JC,KSTAL)
+              BCDXZL(IC,JC) = STORE1(IC,JC,KSTAL)
+              BCDYZL(IC,JC) = STORE2(IC,JC,KSTAL)
+              BCDZZL(IC,JC) = STORE3(IC,JC,KSTAL)
 
             ENDDO
           ENDDO
@@ -4038,14 +3473,16 @@ C     Z-DIRECTION: DRHODZ
             DO IC = ISTAL,ISTOL
 
               STRDZR(IC,JC) = DRHS(IC,JC,KSTOL)
-              BCL2ZR(IC,JC) = STORE3(IC,JC,KSTOL)
+              BCDXZR(IC,JC) = STORE1(IC,JC,KSTOL)
+              BCDYZR(IC,JC) = STORE2(IC,JC,KSTOL)
+              BCDZZR(IC,JC) = STORE3(IC,JC,KSTOL)
 
             ENDDO
           ENDDO
         ENDIF
 
       ENDIF
-
+C                                                          TRANSP = MIX COND/CP
 C     =========================================================================
 
 
